@@ -1,7 +1,7 @@
 # Auto-Dynamic Particle Swarm Optimization (ADPSO)
 
 ## Work to do:
-1. Implementacao do benchmark dinamico (periodo variavel opcional)
+1. <del>Implementacao do benchmark dinamico (periodo variavel opcional)</del>
 2. Definicao dos criterios de avaliacao dos resultados dos algoritmos
 3. Programar um sistema de PSO que possa "ligar/desligar" os componentes daquela tabela que o alexandre apresentou semana passada atravez de um arquivo de configuracao.
 4. Rodar testes dos algoritmos basicos contra o benchmark basico
@@ -12,7 +12,7 @@
 ## Features
 It is possible to configure whether the Benchmark will have changes in the environment in fixed periods, or random periods. Periods are based on population generations.
 
-###PSO the possible configurations are:
+### PSO the possible configurations are:
 - GEN: Number of generations (integer);
 - POPSIZE: Population size (integer);
 - RUNS: Number of times the algorithm will run (integer);
@@ -21,7 +21,7 @@ It is possible to configure whether the Benchmark will have changes in the envir
 - NDIM: Number of dimensions of the problem (integer);
 - BOUNDS: Problem boundaries (list of integers);
 
-###Benchmark (Moving Peak Benchmark) the configurable parameters are the following:
+### Benchmark (Moving Peak Benchmark) the configurable parameters are the following:
 - CHANGE: If there will be changes in the environment (bool);
 - RANDOM_CHANGES: Whether the changes will be random or not (bool);
 - RANGE_GEN_CHANGES: Range of allowed values for random changes to occur (list of integers);
