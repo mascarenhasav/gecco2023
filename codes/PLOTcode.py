@@ -46,9 +46,12 @@ def configPlot(parameters):
         plt.rcParams["axes.facecolor"] = "white"
 
     fig, ax = plt.subplots(1)
-    ax.grid(1)
-    plt.grid(which="major", color="dimgrey", linewidth=0.8)
-    plt.grid(which="minor", color="dimgrey", linestyle=":", linewidth=0.5)
+    if(parameters["GRID"] == 1):
+        ax.grid(True)
+        plt.grid(which="major", color="dimgrey", linewidth=0.8)
+        plt.grid(which="minor", color="dimgrey", linestyle=":", linewidth=0.5)
+    else:
+        ax.grid(False)
     return fig, ax
 
 
@@ -60,6 +63,7 @@ def plot(ax, data, label, fStd=0, color="orange"):
     ax.set_xlabel("Generations", fontsize=15)
     ax.set_ylabel("Error", fontsize=15)
     ax.set_ylim(bottom=0)
+    print(len(data["gen"]))
     ax.set_xlim(0, len(data["gen"]))
     return ax
 
@@ -122,15 +126,21 @@ def main():
 
     fig, ax = configPlot(parameters)
 
+    print( len(pd.unique(df["run"])) )
     data = [[] for i in range( len(pd.unique(df["run"])) )]
-    for i in range( len(pd.unique(df["run"])) ):
-        data[i] = df[df["run"] == i]
-        data[i] = data[i].drop_duplicates(subset=["gen"])[["gen", "bestError"]]
+    for i in range(len(pd.unique(df["run"])) ):
+        data[i] = df[df["run"] == i+1]
+        data[i] = data[i].drop_duplicates(subset=["gen"])[["gen", "bestError", "env"]]
         data[i].reset_index(inplace=True)
-        #ax = plot(ax, data=data[i], label=i)
+        if(parameters["ALLRUNS"]):
+            ax = plot(ax, data=data[i], label=i+1)
 
     bestMean = mean(data)
     ax = plot(ax, data=bestMean, label=parameters["ALGORITHM"], color="green", fStd=1)
+    changesEnv = data[0].ne(data[0].shift()).filter(like="env").apply(lambda x: x.index[x].tolist())["env"][1:]
+    print(changesEnv)
+    for i in changesEnv:
+        plt.axvline(int(i)+1, color="black", linestyle="--")
     showPlots(fig, ax, parameters)
 
 

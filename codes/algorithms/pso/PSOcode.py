@@ -34,13 +34,19 @@ minute = cDate.minute
 nevals = 0
 it = 0
 
+creator.create("FitnessMax", base.Fitness, weights=(-1.0,))
+creator.create("Particle", list, fitness=creator.FitnessMax, speed=list,
+           smin=None, smax=None, best=None, bestfit=creator.FitnessMax)
+creator.create("Swarm", list, best=None, bestfit=creator.FitnessMax)
+
+
 def ale(seed, min, max):
-    random.seed(seed+it)
+    #random.seed(int(seed+it))
     return random.uniform(min, max)
 
-def generate(size, pmin, pmax, smin, smax):
-    part = creator.Particle(ale(i, pmin, pmax) for i in range(size))
-    part.speed = [ale(i, smin, smax) for i in range(size)]
+def generate(ndim, pmin, pmax, smin, smax):
+    part = creator.Particle(ale(i, pmin, pmax) for i in range(ndim))
+    part.speed = [ale(i, smin, smax) for i in range(ndim)]
     part.smin = smin
     part.smax = smax
     return part
@@ -58,24 +64,10 @@ def updateParticle(part, best, phi1, phi2):
             part.speed[i] = math.copysign(part.smax, speed)
     part[:] = list(map(operator.add, part, part.speed))
 
-
-def registerStats():
-    stats = tools.Statistics(lambda ind: ind.fitness.values)
-    stats.register("avg", np.mean)
-    stats.register("std", np.std)
-    stats.register("min", np.min)
-    stats.register("max", np.max)
-    return stats
-
-def createLogbook(header):
-    logbook = tools.Logbook()
-    logbook.header = header
-    return logbook
-
 def createToolbox(parameters):
     BOUNDS = parameters["BOUNDS"]
     toolbox = base.Toolbox()
-    toolbox.register("particle", generate, size=parameters["NDIM"],
+    toolbox.register("particle", generate, ndim=parameters["NDIM"],
         pmin=BOUNDS[0], pmax=BOUNDS[1], smin=-(BOUNDS[1] - BOUNDS[0])/2.0,
         smax=(BOUNDS[1] - BOUNDS[0])/2.0)
     toolbox.register("population", tools.initRepeat, list, toolbox.particle)
@@ -96,20 +88,39 @@ def writeLog(mode, filename, header, data=None):
             csvwriter = csv.DictWriter(file, fieldnames=header)
             csvwriter.writerows(data)
 
-def evaluate(x, function):
+def evaluate(x, function, evalInc=1):
     global nevals
-    fitness = [math.sqrt( (function(x)[0] - function.maximums()[0][0])**2 )]
-    #fitness = benchmarks.himmelblau(x)
-    #fitness = benchmarks.ackley(x)
-    #fitness = abs(benchmarks.shekel(x, [[3.33, 3.33]], [2])[0] - benchmarks.shekel([3.33,3.33], [[3.33, 3.33]], [2])[0])
-    #fitness = benchmarks.h1(x)
-    nevals += 1
+    fitInd = function(x)[0]
+    globalOP = function.maximums()[0][0]
+    fitness = [abs( fitInd - globalOP )]
+    #print(f"Ind: {fitInd}   GOP: {globalOP}   Fitness: {fitness}")
+    if(evalInc):
+        nevals += 1
+    else:
+        function.nevals -= 1    # Dont increment the evals in the lib
     return fitness
 
-creator.create("FitnessMax", base.Fitness, weights=(-1.0,))
-creator.create("Particle", list, fitness=creator.FitnessMax, speed=list,
-           smin=None, smax=None, best=None, bestfit=creator.FitnessMax)
-creator.create("Swarm", list, best=None, bestfit=creator.FitnessMax)
+
+def evaluateAll(pop, best, toolbox, mpb):
+    for part in pop:
+        part.fitness.values = toolbox.evaluate(part, mpb, 0)
+        if not part.best or part.best.fitness > part.fitness:
+            part.best = creator.Particle(part)
+            part.best.fitness.values = part.fitness.values
+
+    best.fitness.values = toolbox.evaluate(best, mpb, 0)
+    return pop, best
+
+def changeDetection(pop, toolbox, best):
+    now = toolbox.evaluate(best, mpb, 0)  # Check if ocurred a change
+    if(now[0] != best.fitness.values[0]):
+        print(f"gen:{g} n:{nevals} best:{best.fitness.values[0]} now:{now[0]}")
+        change = 1
+        best.fitness.values = now
+        pop = evaluateAll(pop, toolbox, mpb)
+    return pop, best
+
+
 
 def pso(parameters):
 
@@ -143,31 +154,56 @@ def pso(parameters):
     mpb = movingpeaks.MovingPeaks(dim=parameters["NDIM"], **scenario)
 
 
-    header = ["run", "gen", "nevals", "partN", "part", "partError", "best", "bestError"]
+    header = ["run", "gen", "nevals", "partN", "part", "partError", "best", "bestError", "env", "gop"]
     writeLog(mode=0, filename=filename, header=header)
     toolbox = createToolbox(parameters)
     bestFitness = [ [] for i in range(ITER)]
 
-    for it in range(ITER):
+    if(parameters["RANDOM_CHANGES"]):
+        changesGen = [random.randint(parameters["RANGE_GEN_CHANGES"][0], parameters["RANGE_GEN_CHANGES"][1]) for _ in range(parameters["NCHANGES"])]
+    else:
+        changesGen = parameters["CHANGES_GEN"]
+
+    for it in range(1, ITER+1):
+        random.seed(it**5)
         pop = toolbox.population(n=POPSIZE)
         best = None
         nevals = 0
+        env = 0
 
-        for g in range(GEN):
-            for part, partN in zip(pop, range(len(pop))):
+        for g in range(1, GEN+1):
+
+            # Change detection
+            if(parameters["CHANGE"]):
+                if(g in changesGen):
+                    env += 1
+                    mpb.changePeaks()
+                    pop, best = evaluateAll(pop, best, toolbox, mpb)
+
+            # PSO
+            for part, partN in zip(pop, range(1, len(pop)+1)):
                 part.fitness.values = toolbox.evaluate(part, mpb)
+
+                if(parameters["CD"] and best):
+                    changeDetection(pop, toolbox, best)
+
                 if not part.best or part.best.fitness < part.fitness:
                     part.best = creator.Particle(part)
                     part.best.fitness.values = part.fitness.values
                 if not best or best.fitness < part.fitness:
                     best = creator.Particle(part)
                     best.fitness.values = part.fitness.values
-                log = [{"run": it, "gen": g, "nevals":nevals, "partN": partN, "part":part, "partError": part.best.fitness.values[0], "best": best, "bestError": best.fitness.values[0]}]
+
+                log = [{"run": it, "gen": g, "nevals":nevals, "partN": partN, "part":part, "partError": part.best.fitness.values[0], "best": best, "bestError": best.fitness.values[0], "env": env, "gop":mpb.maximums()[0][0]}]
+                change = 0
                 writeLog(mode=1, filename=filename, header=header, data=log)
+
                 if(debug):
                     print(log)
+
             for part in pop:
-                toolbox.update(part, best)
+                toolbox.update(part, best) # Update the particles position
+
 
     shutil.copyfile("config.ini", f"{path}/config.ini")
     print(f"File generated: {path}/data.csv \nThx!")
@@ -184,6 +220,9 @@ def main():
         print(parameters)
 
     pso(parameters)
+
+    if(parameters["PLOT"]):
+        os.system(f"python3 ../../PLOTcode.py {parameters['ALGORITHM']} {year}-{month}-{day} {hour}-{minute}")
 
 
 if __name__ == "__main__":
