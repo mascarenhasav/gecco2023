@@ -31,9 +31,11 @@ day = cDate.day
 hour = cDate.hour
 minute = cDate.minute
 
+colors = ["r", "b", "gray", "orange", "lime"]
+
 def configPlot(parameters):
     THEME = parameters["THEME"]
-    plt.rcParams["figure.figsize"] = (20, 8)
+    plt.rcParams["figure.figsize"] = (16, 9)
     if(THEME == 1):
         plt.style.use("dark_background")
         plt.rcParams["axes.facecolor"] = "cornsilk"
@@ -56,15 +58,17 @@ def configPlot(parameters):
 
 
 
-def plot(ax, data, label, fStd=0, color="orange"):
+def plot(ax, data, label, fStd=0, color="orange", parameters=False):
     ax.plot(data["gen"], data["bestError"], color=color, label=label)
     if(fStd):
-        ax.fill_between(data["gen"], data["bestError"] - data["std"], data["bestError"] + data["std"], color="dark"+color, alpha=0.1)
+        ax.fill_between(data["gen"], data["bestError"] - data["std"], data["bestError"] + data["std"], color="dark"+color, alpha=0.3)
     ax.set_xlabel("Generations", fontsize=15)
     ax.set_ylabel("Error", fontsize=15)
-    ax.set_ylim(bottom=0)
-    print(len(data["gen"]))
-    ax.set_xlim(0, len(data["gen"]))
+    if(parameters["YLIM"]):
+        ax.set_ylim(bottom=parameters["YLIM"][0], top=parameters["YLIM"][1])
+    else:
+        ax.set_ylim(bottom=0, top=0.1)
+    ax.set_xlim(1, len(data["gen"]))
     return ax
 
 
@@ -133,10 +137,10 @@ def main():
         data[i] = data[i].drop_duplicates(subset=["gen"])[["gen", "bestError", "env"]]
         data[i].reset_index(inplace=True)
         if(parameters["ALLRUNS"]):
-            ax = plot(ax, data=data[i], label=i+1)
+            ax = plot(ax, data=data[i], label=f"Run {i+1}", color=colors[i], parameters=parameters)
 
     bestMean = mean(data)
-    ax = plot(ax, data=bestMean, label=parameters["ALGORITHM"], color="green", fStd=1)
+    ax = plot(ax, data=bestMean, label="Mean", color="green", fStd=1, parameters=parameters)
     changesEnv = data[0].ne(data[0].shift()).filter(like="env").apply(lambda x: x.index[x].tolist())["env"][1:]
     print(changesEnv)
     for i in changesEnv:

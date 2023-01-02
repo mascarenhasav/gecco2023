@@ -15,6 +15,7 @@ import matplotlib.pyplot as plt
 import datetime
 import os
 import csv
+import ast
 from deap import base
 from deap import benchmarks
 from deap import creator
@@ -45,6 +46,8 @@ def ale(seed, min, max):
     return random.uniform(min, max)
 
 def generate(ndim, pmin, pmax, smin, smax):
+    #pmin = 0
+    #pmax = 100
     part = creator.Particle(ale(i, pmin, pmax) for i in range(ndim))
     part.speed = [ale(i, smin, smax) for i in range(ndim)]
     part.smin = smin
@@ -65,11 +68,11 @@ def updateParticle(part, best, phi1, phi2):
     part[:] = list(map(operator.add, part, part.speed))
 
 def createToolbox(parameters):
-    BOUNDS = parameters["BOUNDS"]
+    BOUNDS_POS = parameters["BOUNDS_POS"]
+    BOUNDS_VEL = parameters["BOUNDS_VEL"]
     toolbox = base.Toolbox()
-    toolbox.register("particle", generate, ndim=parameters["NDIM"],
-        pmin=BOUNDS[0], pmax=BOUNDS[1], smin=-(BOUNDS[1] - BOUNDS[0])/2.0,
-        smax=(BOUNDS[1] - BOUNDS[0])/2.0)
+    toolbox.register("particle", generate, ndim=parameters["NDIM"],\
+    pmin=BOUNDS_POS[0], pmax=BOUNDS_POS[1], smin=BOUNDS_VEL[0],smax=BOUNDS_VEL[1])
     toolbox.register("population", tools.initRepeat, list, toolbox.particle)
     toolbox.register("swarm", tools.initRepeat, creator.Swarm, toolbox.particle)
     toolbox.register("update", updateParticle, phi1=parameters["phi1"], phi2=parameters["phi2"])
@@ -140,6 +143,8 @@ def pso(parameters):
     filename = f"{path}/{parameters['FILENAME']}"
     debug = parameters["DEBUG"]
 
+    peaks = 0
+
     global nevals
     global it
 
@@ -151,11 +156,11 @@ def pso(parameters):
     scenario["move_severity"] = parameters["MOVE_SEVERITY_MPB"]
     scenario["min_height"] = parameters["MIN_HEIGHT_MPB"]
     scenario["max_height"] = parameters["MAX_HEIGHT_MPB"]
-    mpb = movingpeaks.MovingPeaks(dim=parameters["NDIM"], **scenario)
 
-
-    header = ["run", "gen", "nevals", "partN", "part", "partError", "best", "bestError", "env", "gop"]
+    header = ["run", "gen", "nevals", "partN", "part", "partError", "best", "bestError", "env", "gop", "gopFitness", "lop", "lopFitness"]
     writeLog(mode=0, filename=filename, header=header)
+    headerOPT = [f"opt{i}" for i in range(parameters["NPEAKS_MPB"])]
+    writeLog(mode=0, filename=f"{path}/optima.csv", header=headerOPT)
     toolbox = createToolbox(parameters)
     bestFitness = [ [] for i in range(ITER)]
 
@@ -165,11 +170,26 @@ def pso(parameters):
         changesGen = parameters["CHANGES_GEN"]
 
     for it in range(1, ITER+1):
+        rndMPB = random.Random()
+        rnd = random.Random()
         random.seed(it**5)
+        rnd.seed(it**5)
+        rndMPB.seed(minute**5)
+        mpb = movingpeaks.MovingPeaks(dim=parameters["NDIM"], random=rndMPB, **scenario)
         pop = toolbox.population(n=POPSIZE)
         best = None
         nevals = 0
         env = 0
+        opt = [0 for _ in range(parameters["NPEAKS_MPB"])]
+
+        if(peaks < parameters["NCHANGES"]):
+            for i in range(parameters["NPEAKS_MPB"]):
+                opt[i] = mpb.maximums()[i]
+            with open(f"{path}/optima.csv", "a") as f:
+                write = csv.writer(f)
+                write.writerow(opt)
+            peaks += 1
+
 
         for g in range(1, GEN+1):
 
@@ -179,6 +199,13 @@ def pso(parameters):
                     env += 1
                     mpb.changePeaks()
                     pop, best = evaluateAll(pop, best, toolbox, mpb)
+                    if(peaks < parameters["NCHANGES"]):
+                        for i in range(parameters["NPEAKS_MPB"]):
+                            opt[i] = mpb.maximums()[i]
+                        with open(f"{path}/optima.csv", "a") as f:
+                            write = csv.writer(f)
+                            write.writerow(opt)
+                        peaks += 1
 
             # PSO
             for part, partN in zip(pop, range(1, len(pop)+1)):
@@ -194,8 +221,7 @@ def pso(parameters):
                     best = creator.Particle(part)
                     best.fitness.values = part.fitness.values
 
-                log = [{"run": it, "gen": g, "nevals":nevals, "partN": partN, "part":part, "partError": part.best.fitness.values[0], "best": best, "bestError": best.fitness.values[0], "env": env, "gop":mpb.maximums()[0][0]}]
-                change = 0
+                log = [{"run": it, "gen": g, "nevals":nevals, "partN": partN, "part":part, "partError": part.best.fitness.values[0], "best": best, "bestError": best.fitness.values[0], "env": env}]
                 writeLog(mode=1, filename=filename, header=header, data=log)
 
                 if(debug):
@@ -203,7 +229,6 @@ def pso(parameters):
 
             for part in pop:
                 toolbox.update(part, best) # Update the particles position
-
 
     shutil.copyfile("config.ini", f"{path}/config.ini")
     print(f"File generated: {path}/data.csv \nThx!")
