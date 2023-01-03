@@ -1,7 +1,9 @@
 '''
-Code for PSO algorithm using DEAP library
+Code for MPSO algorithm using DEAP library
 
 Alexandre Mascarenhas
+
+2023/1
 '''
 
 import json
@@ -15,13 +17,14 @@ import matplotlib.pyplot as plt
 import datetime
 import os
 import csv
+import ast
+import sys
 from deap import base
 from deap import benchmarks
 from deap import creator
 from deap import tools
 from deap.benchmarks import movingpeaks
-from deap import creator
-from deap import tools
+
 
 # datetime variables
 cDate = datetime.datetime.now()
@@ -31,19 +34,16 @@ day = cDate.day
 hour = cDate.hour
 minute = cDate.minute
 
-nevals = 0
-it = 0
+# Global variables
+nevals = 0 # Number of evaluations
+it = 0 # Current running
 
-creator.create("FitnessMax", base.Fitness, weights=(-1.0,))
-creator.create("Particle", list, fitness=creator.FitnessMax, speed=list,
-           smin=None, smax=None, best=None, bestfit=creator.FitnessMax)
-creator.create("Swarm", list, best=None, bestfit=creator.FitnessMax)
-
-
+'''
+Create the particle, with its initial position and speed
+being randomly generated
+'''
 def ale(seed, min, max):
-    #random.seed(int(seed+it))
     return random.uniform(min, max)
-
 def generate(ndim, pmin, pmax, smin, smax):
     part = creator.Particle(ale(i, pmin, pmax) for i in range(ndim))
     part.speed = [ale(i, smin, smax) for i in range(ndim)]
@@ -51,6 +51,9 @@ def generate(ndim, pmin, pmax, smin, smax):
     part.smax = smax
     return part
 
+'''
+Update the position of the particles
+'''
 def updateParticle(part, best, phi1, phi2):
     u1 = (random.uniform(0, phi1) for _ in range(len(part)))
     u2 = (random.uniform(0, phi2) for _ in range(len(part)))
@@ -64,18 +67,53 @@ def updateParticle(part, best, phi1, phi2):
             part.speed[i] = math.copysign(part.smax, speed)
     part[:] = list(map(operator.add, part, part.speed))
 
+'''
+Convert particles to probabilistic particle
+'''
+def convertQuantum(swarm, rcloud, centre, dist):
+    dim = len(swarm[0])
+    for part in swarm:
+        position = [random.gauss(0, 1) for _ in range(dim)]
+        dist = math.sqrt(sum(x**2 for x in position))
+
+        if dist == "gaussian":
+            u = abs(random.gauss(0, 1.0/3.0))
+            part[:] = [(rcloud * x * u**(1.0/dim) / dist) + c for x, c in zip(position, centre)]
+
+        elif dist == "uvd":
+            u = random.random()
+            part[:] = [(rcloud * x * u**(1.0/dim) / dist) + c for x, c in zip(position, centre)]
+
+        elif dist == "nuvd":
+            u = abs(random.gauss(0, 1.0/3.0))
+            part[:] = [(rcloud * x * u / dist) + c for x, c in zip(position, centre)]
+
+        del part.fitness.values
+        del part.bestfit.values
+        part.best = None
+
+    return swarm
+
+'''
+Define the functions responsibles to create the objects of the algorithm
+particles, swarms, the update and evaluate function also
+'''
 def createToolbox(parameters):
-    BOUNDS = parameters["BOUNDS"]
+    BOUNDS_POS = parameters["BOUNDS_POS"]
+    BOUNDS_VEL = parameters["BOUNDS_VEL"]
     toolbox = base.Toolbox()
-    toolbox.register("particle", generate, ndim=parameters["NDIM"],
-        pmin=BOUNDS[0], pmax=BOUNDS[1], smin=-(BOUNDS[1] - BOUNDS[0])/2.0,
-        smax=(BOUNDS[1] - BOUNDS[0])/2.0)
+    toolbox.register("particle", generate, ndim=parameters["NDIM"],\
+    pmin=BOUNDS_POS[0], pmax=BOUNDS_POS[1], smin=BOUNDS_VEL[0],smax=BOUNDS_VEL[1])
     toolbox.register("population", tools.initRepeat, list, toolbox.particle)
     toolbox.register("swarm", tools.initRepeat, creator.Swarm, toolbox.particle)
     toolbox.register("update", updateParticle, phi1=parameters["phi1"], phi2=parameters["phi2"])
+    toolbox.register("convert", convertQuantum, dist="nuvd")
     toolbox.register("evaluate", evaluate)
     return toolbox
 
+'''
+Write the log of the algorithm over the generations on a csv file
+'''
 def writeLog(mode, filename, header, data=None):
     if(mode==0):
         # Create csv file
@@ -88,12 +126,15 @@ def writeLog(mode, filename, header, data=None):
             csvwriter = csv.DictWriter(file, fieldnames=header)
             csvwriter.writerows(data)
 
+'''
+Fitness function. Returns the error between the fitness of the particle
+and the global optimum
+'''
 def evaluate(x, function, evalInc=1):
     global nevals
     fitInd = function(x)[0]
     globalOP = function.maximums()[0][0]
     fitness = [abs( fitInd - globalOP )]
-    #print(f"Ind: {fitInd}   GOP: {globalOP}   Fitness: {fitness}")
     if(evalInc):
         nevals += 1
     else:
@@ -101,34 +142,42 @@ def evaluate(x, function, evalInc=1):
     return fitness
 
 
+'''
+Update the evaluation of all particles after a change occurred
+'''
 def evaluateAll(pop, best, toolbox, mpb):
-    for part in pop:
-        part.fitness.values = toolbox.evaluate(part, mpb, 0)
-        if not part.best or part.best.fitness > part.fitness:
-            part.best = creator.Particle(part)
-            part.best.fitness.values = part.fitness.values
+    for swarm in pop:
+        for part, partN in zip(swarm, range(1, len(swarm)+1)):
+            part.fitness.values = toolbox.evaluate(part, mpb, 0)
+            # Check if the particles are the best of itself and best at all
+            if not part.best or part.best.fitness < part.fitness:
+                part.best = creator.Particle(part)
+                part.best.fitness.values = part.fitness.values
+
+        swarm.best.fitness.values = toolbox.evaluate(swarm.best, mpb, 0)
 
     best.fitness.values = toolbox.evaluate(best, mpb, 0)
+
     return pop, best
 
-def changeDetection(pop, toolbox, best):
-    now = toolbox.evaluate(best, mpb, 0)  # Check if ocurred a change
-    if(now[0] != best.fitness.values[0]):
-        print(f"gen:{g} n:{nevals} best:{best.fitness.values[0]} now:{now[0]}")
-        change = 1
-        best.fitness.values = now
-        pop = evaluateAll(pop, toolbox, mpb)
-    return pop, best
+'''
+This is to write the position and fitness of the peaks on
+the 'optima.csv' file. The number of the peaks will be
+NPEAKS_MPB*NCHANGES
+'''
+def saveOptima(parameters, mpb, path):
+    opt = [0 for _ in range(parameters["NPEAKS_MPB"])]
+    for i in range(parameters["NPEAKS_MPB"]):
+        opt[i] = mpb.maximums()[i]
+    with open(f"{path}/optima.csv", "a") as f:
+        write = csv.writer(f)
+        write.writerow(opt)
 
-
-
-def pso(parameters):
-
-    GEN = parameters["GEN"]
-    POPSIZE = parameters["POPSIZE"]
-    ITER = parameters["RUNS"]
-
-    path = f"{parameters['PATH']}/{parameters['ALGORITHM']}"
+'''
+Check if the dirs already exist, and if not, create them
+Returns the path
+'''
+def checkDirs(path):
     if(os.path.isdir(path) == False):
         os.mkdir(path)
     path += f"/{year}-{month}-{day}"
@@ -137,11 +186,35 @@ def pso(parameters):
     path += f"/{hour}-{minute}"
     if(os.path.isdir(path) == False):
         os.mkdir(path)
-    filename = f"{path}/{parameters['FILENAME']}"
+    return path
+
+
+'''
+Algorithm
+'''
+def mpso(parameters):
+    # Create the DEAP creators
+    creator.create("FitnessMax", base.Fitness, weights=(-1.0,))
+    creator.create("Particle", list, fitness=creator.FitnessMax, speed=list,
+               smin=None, smax=None, best=None, bestfit=creator.FitnessMax)
+    creator.create("Swarm", list, best=None, bestfit=creator.FitnessMax)
+
+    # Set the general parameters
+    GEN = parameters["GEN"]
+    POPSIZE = parameters["POPSIZE"]
+    NSWARMS = parameters["NSWARMS"]
+    ITER = parameters["RUNS"]
     debug = parameters["DEBUG"]
+    path = f"{parameters['PATH']}/{parameters['ALGORITHM']}"
 
     global nevals
     global it
+    bestFitness = [ [] for i in range(ITER)]
+    peaks = 0
+
+    # Check if the dirs already exist otherwise create them
+    path = checkDirs(path)
+    filename = f"{path}/{parameters['FILENAME']}"
 
     # Setup of MPB
     scenario = movingpeaks.SCENARIO_1
@@ -151,67 +224,103 @@ def pso(parameters):
     scenario["move_severity"] = parameters["MOVE_SEVERITY_MPB"]
     scenario["min_height"] = parameters["MIN_HEIGHT_MPB"]
     scenario["max_height"] = parameters["MAX_HEIGHT_MPB"]
-    mpb = movingpeaks.MovingPeaks(dim=parameters["NDIM"], **scenario)
+    scenario["min_coord"] = parameters["MIN_COORD_MPB"]
+    scenario["max_coord"] = parameters["MAX_COORD_MPB"]
 
-
-    header = ["run", "gen", "nevals", "partN", "part", "partError", "best", "bestError", "env", "gop"]
+    # Headers of the log files
+    header = ["run", "gen", "nevals", "swarm", "partN", "part", "partError", "sbest", "sbestError", "best", "bestError", "env"]
     writeLog(mode=0, filename=filename, header=header)
-    toolbox = createToolbox(parameters)
-    bestFitness = [ [] for i in range(ITER)]
+    headerOPT = [f"opt{i}" for i in range(parameters["NPEAKS_MPB"])]
+    writeLog(mode=0, filename=f"{path}/optima.csv", header=headerOPT)
 
+    # Create the toolbox functions
+    toolbox = createToolbox(parameters)
+
+    # Check if the changes should be random or pre defined
     if(parameters["RANDOM_CHANGES"]):
         changesGen = [random.randint(parameters["RANGE_GEN_CHANGES"][0], parameters["RANGE_GEN_CHANGES"][1]) for _ in range(parameters["NCHANGES"])]
     else:
         changesGen = parameters["CHANGES_GEN"]
 
+    # Main loop of ITER runs
     for it in range(1, ITER+1):
         random.seed(it**5)
-        pop = toolbox.population(n=POPSIZE)
         best = None
         nevals = 0
         env = 0
+        nConv = 0
 
+        # Initialize the benchmark for each run with seed being the minute
+        rndMPB = random.Random()
+        try:
+            rndMPB.seed(int(sys.argv[1])**5)
+        except IndexError:
+            rndMPB.seed(minute**5)
+
+        mpb = movingpeaks.MovingPeaks(dim=parameters["NDIM"], random=rndMPB, **scenario)
+
+        # Create the population with size POPSIZE
+        pop = [toolbox.swarm(n=POPSIZE) for _ in range(NSWARMS)]
+
+        # Save the optima values
+        if(peaks < parameters["NCHANGES"]):
+            saveOptima(parameters, mpb, path)
+            peaks += 1
+
+        # Loop for each generation
         for g in range(1, GEN+1):
 
             # Change detection
             if(parameters["CHANGE"]):
                 if(g in changesGen):
                     env += 1
-                    mpb.changePeaks()
-                    pop, best = evaluateAll(pop, best, toolbox, mpb)
+                    mpb.changePeaks() # Change the environment
+                    pop, best = evaluateAll(pop, best, toolbox, mpb) # Re-evaluate all particles
+                    if(peaks < parameters["NCHANGES"]): # Save the optima values
+                        saveOptima(parameters, mpb, path)
+                        peaks += 1
 
             # PSO
-            for part, partN in zip(pop, range(1, len(pop)+1)):
-                part.fitness.values = toolbox.evaluate(part, mpb)
+            for swarm, swarmN in zip(pop, range(1, len(pop)+1)):
 
-                if(parameters["CD"] and best):
-                    changeDetection(pop, toolbox, best)
+                for part, partN in zip(swarm, range(1, len(swarm)+1)):
 
-                if not part.best or part.best.fitness < part.fitness:
-                    part.best = creator.Particle(part)
-                    part.best.fitness.values = part.fitness.values
-                if not best or best.fitness < part.fitness:
-                    best = creator.Particle(part)
-                    best.fitness.values = part.fitness.values
+                    #if swarm.best and part.best:
+                        #toolbox.update(part, swarm.best)
 
-                log = [{"run": it, "gen": g, "nevals":nevals, "partN": partN, "part":part, "partError": part.best.fitness.values[0], "best": best, "bestError": best.fitness.values[0], "env": env, "gop":mpb.maximums()[0][0]}]
-                change = 0
-                writeLog(mode=1, filename=filename, header=header, data=log)
+                    # Evaluate the particles
+                    part.fitness.values = toolbox.evaluate(part, mpb)
 
-                if(debug):
-                    print(log)
+                    # Check if the particles are the best of itself and best at all
+                    if not part.best or part.best.fitness < part.fitness:
+                        part.best = creator.Particle(part)
+                        part.best.fitness.values = part.fitness.values
+                    if not swarm.best or swarm.best.fitness < part.fitness:
+                        swarm.best = creator.Particle(part)
+                        swarm.best.fitness.values = part.fitness.values
+                    if not best or best.fitness < part.fitness:
+                        best = creator.Particle(part)
+                        best.fitness.values = part.fitness.values
 
-            for part in pop:
-                toolbox.update(part, best) # Update the particles position
+                    # Save the log
+                    log = [{"run": it, "gen": g, "nevals":nevals, "swarm": swarmN, "partN": partN, "part":part, "partError": part.best.fitness.values[0], "sbest": swarm.best, "sbestError": swarm.best.fitness.values[0], "best": best, "bestError": best.fitness.values[0], "env": env}]
+                    writeLog(mode=1, filename=filename, header=header, data=log)
 
+                    if(debug):
+                        print(log)
 
+                # Update the particles position
+                for part in swarm:
+                    toolbox.update(part, swarm.best)
+
+    # Copy the config.ini file to the experiment dir
     shutil.copyfile("config.ini", f"{path}/config.ini")
     print(f"File generated: {path}/data.csv \nThx!")
 
 
 
 def main():
-    # reading the parameters from the config file
+    # Read the parameters from the config file
     with open("./config.ini") as f:
         parameters = json.loads(f.read())
     debug = parameters["DEBUG"]
@@ -219,10 +328,13 @@ def main():
         print("Parameters:")
         print(parameters)
 
-    pso(parameters)
+    # Call the algorithm
+    mpso(parameters)
 
+    # For automatic calling of the plot functions
     if(parameters["PLOT"]):
         os.system(f"python3 ../../PLOTcode.py {parameters['ALGORITHM']} {year}-{month}-{day} {hour}-{minute}")
+        os.system(f"python3 ../../PLOT2code.py {parameters['ALGORITHM']} {year}-{month}-{day} {hour}-{minute}")
 
 
 if __name__ == "__main__":

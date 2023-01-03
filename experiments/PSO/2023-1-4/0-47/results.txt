@@ -1,0 +1,20 @@
+-----------------------------------------------------
+              Summary of the Experiment              
+
+Experiment: PSO on MPB
+
+To know the setup of experiment, please see
+the file 'config.ini' in this same directory.  
+
+Results:
+
+- Fbog= 10.3592(13.9381)
+- Emo = 4.7314(1.3532)
+- Eb  = 4.7314(1.3532)
+
+
+
+Script executed in: 2023/1/4 0:49
+
+                       Is us!                      
+-----------------------------------------------------

@@ -1,0 +1,20 @@
+-----------------------------------------------------
+              Summary of the Experiment              
+
+Experiment: MPSO on MPB
+
+To know the setup of experiment, please see
+the file 'config.ini' in this same directory.  
+
+Results:
+
+- Fbog= 7.9804(11.4056)
+- Emo = nan(nan)
+- Eb  = nan(nan)
+
+
+
+Script executed in: 2023/1/4 4:44
+
+                       Is us!                      
+-----------------------------------------------------

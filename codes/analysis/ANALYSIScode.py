@@ -117,7 +117,7 @@ def main():
         print("Parameters:")
         print(parameters)
 
-    path = f"{parameters['PATH']}/{sys.argv[1]}/{sys.argv[2]}/{sys.argv[3]}"
+    path = f"{parameters['PATH']}/{parameters['ALGORITHM']}/{sys.argv[1]}/{sys.argv[2]}"
     df = pd.read_csv(f"{path}/data.csv")
 
     Fbog = [-1, -1]
@@ -130,12 +130,20 @@ def main():
 
     # Separate the dataset em subsets filtered by runs
     data = [[] for i in range( len(pd.unique(df["run"])) )]
+    swarm = [[] for i in range( len(pd.unique(df["swarm"])) )]
     for i in range(len(pd.unique(df["run"])) ): # Get the number of runs
         data[i] = df[df["run"] == i+1]
-        data[i] = data[i].drop_duplicates(subset=["gen"])[["gen", "nevals", "bestError", "env"]]
+        for j in range(len(pd.unique(data[i]["swarm"])) ): # Get the number of runs
+            swarm[j] = data[i][data[i]["swarm"] == j+1]
+            swarm[j] = swarm[j].drop_duplicates(subset=["gen"], keep="last")[["gen", "nevals", "swarm", "sbestError", "env"]]
+            swarm[j].reset_index(inplace=True)
+            del swarm[j]["index"]
+            swarm[j].to_csv(f"{path}/subsets/run{i}-swarm{j}.csv", index = True)
+        data[i] = data[i].drop_duplicates(subset=["gen"], keep="last")[["gen", "nevals", "swarm", "bestError", "env"]]
         data[i].reset_index(inplace=True)
         del data[i]["index"]
-        data[i].to_csv(f"{path}/subsets/data{i}.csv", index = True)
+        data[i].to_csv(f"{path}/subsets/run{i}.csv", index = True)
+
 
 
     # Get the points of changes of environment

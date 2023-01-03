@@ -32,7 +32,9 @@ day = cDate.day
 hour = cDate.hour
 minute = cDate.minute
 
-colors = ["red", "b", "gray", "orange", "lime", "yellow"]
+#colors = ["r", "b", "#afafaf", "#820e57", "orange", "yellow"]
+colors = ["r", "b", "#afafaf", "#820e57", "orange", "yellow"]
+colorS = ["orange", "red", "g", "b"]
 colors2 = ["r", "gray"]
 
 def configPlot(parameters):
@@ -64,7 +66,7 @@ def plot(ax, data, label=None, fStd=0, color="orange", s=1, marker="o", alpha=1,
     x = [item[0] for item in data]
     y = [item[1] for item in data]
     if(conn):
-        ax.plot(x,y, color=color, label=label, marker=marker, alpha=alpha)
+        ax.plot(x,y, color=color, label=label, marker=marker, markersize=s, alpha=alpha)
     else:
         ax.scatter(x,y, color=color, label=label, s=s, marker=marker, alpha=alpha)
     if(fStd):
@@ -79,7 +81,7 @@ def plot(ax, data, label=None, fStd=0, color="orange", s=1, marker="o", alpha=1,
 
 
 def showPlots(fig, ax, parameters):
-    path = f"{parameters['PATH']}/{sys.argv[1]}/{sys.argv[2]}/{sys.argv[3]}"
+    path = f"{parameters['PATH']}/{parameters['ALGORITHM']}/{sys.argv[1]}/{sys.argv[2]}"
     THEME = parameters["THEME"]
     plt.legend()
     for text in plt.legend().get_texts():
@@ -107,7 +109,7 @@ def main():
 
     THEME = parameters["THEME"]
 
-    path = f"{parameters['PATH']}/{sys.argv[1]}/{sys.argv[2]}/{sys.argv[3]}"
+    path = f"{parameters['PATH']}/{parameters['ALGORITHM']}/{sys.argv[1]}/{sys.argv[2]}"
     df = pd.read_csv(f"{path}/data.csv")
     gop = pd.read_csv(f"{path}/optima.csv")
 
@@ -117,23 +119,30 @@ def main():
     data = [[] for i in range( len(pd.unique(df["run"])) )]
     best = [[] for i in range( len(pd.unique(df["run"])) )]
     part = [[] for i in range( len(pd.unique(df["run"])) )]
+    swarm = [[] for i in range( len(pd.unique(df["swarm"])) )]
+    bswarm = [[] for i in range( len(pd.unique(df["swarm"])) )]
     for i in range(len(pd.unique(df["run"])) ):
         data[i] = df[df["run"] == i+1]
-        best[i] = data[i].drop_duplicates(subset=["gen"])[["best"]].iloc[1:]
-        best[i].reset_index(inplace=True)
-        best[i] = best[i]["best"].values.tolist()
-        part[i] = data[i]["part"].values.tolist()
-        temp = [json.loads(item)[0:2] for item in part[i]]
-        ax = plot(ax, data=temp, label=f"Run {i+1}", color=colors[i], s=5, alpha=0.3)
-        temp = [json.loads(item)[0:2] for item in best[i]]
-        ax = plot(ax, data=temp, color=colors[i], s=40, marker="X", conn=True)
-        '''
-        temp = [json.loads(item)[0:2] for item in gop[i]]
-        if(i == len(pd.unique(df["run"]))-1):
-            ax = plot(ax, data=temp, label=f"GOP", color="white", s=60, marker="s", conn=True)
+        if(parameters["PLOT_SWARMS"]):
+            for j in range(len(pd.unique(data[i]["swarm"])) ): # Get the number of runs
+                swarm[j] = data[i][data[i]["swarm"] == j+1]
+                bswarm[j] = swarm[j].drop_duplicates(subset=["gen"], keep="last")[["sbest"]]
+                bswarm[j].reset_index(inplace=True)
+                bswarm[j] = bswarm[j]["sbest"].values.tolist()
+                temp = [json.loads(item)[0:2] for item in bswarm[j]]
+                ax = plot(ax, data=temp, color=colors[j], s=4000, alpha=0.05)
+
+
         else:
-            ax = plot(ax, data=temp, color="white", s=60, marker="s", conn=True)
-        '''
+            best[i] = data[i].drop_duplicates(subset=["gen"], keep="last")[["best"]]
+            best[i].reset_index(inplace=True)
+            best[i] = best[i]["best"].values.tolist()
+            part[i] = data[i]["part"].values.tolist()
+            temp = [json.loads(item)[0:2] for item in part[i]]
+            ax = plot(ax, data=temp, label=f"Run {i+1}", color=colors[i], s=5, alpha=0.3)
+            temp = [json.loads(item)[0:2] for item in best[i]]
+            ax = plot(ax, data=temp, color=colors[i], s=5, marker="X", conn=True)
+
 
     for k in range(gop.shape[1]):
         temp = gop[f"opt{k}"].values.tolist()
@@ -149,9 +158,9 @@ def main():
         print(temp)
         x = [[x[1], x[2]] for x in temp]
         if(k == 0):
-            ax = plot(ax, data=x, label=f"GOP", color="white", s=60, marker="*", conn=True)
+            ax = plot(ax, data=x, label=f"GOP", color="green", s=10, marker="*", conn=True)
         else:
-            ax = plot(ax, data=x, color="brown", s=60, marker="s", conn=True, alpha=0.5)
+            ax = plot(ax, data=x, color="brown", s=5, marker="s", conn=True, alpha=0.5)
 
 
     showPlots(fig, ax, parameters)

@@ -31,7 +31,7 @@ day = cDate.day
 hour = cDate.hour
 minute = cDate.minute
 
-colors = ["r", "b", "gray", "orange", "lime"]
+colors = ["r", "b", "#afafaf", "#820e57", "orange", "yellow"]
 
 def configPlot(parameters):
     THEME = parameters["THEME"]
@@ -75,7 +75,7 @@ def plot(ax, data, label, fStd=0, color="orange", parameters=False):
 
 
 def showPlots(fig, ax, parameters):
-    path = f"{parameters['PATH']}/{sys.argv[1]}/{sys.argv[2]}/{sys.argv[3]}"
+    path = f"{parameters['PATH']}/{parameters['ALGORITHM']}/{sys.argv[1]}/{sys.argv[2]}"
     THEME = parameters["THEME"]
     plt.legend()
     for text in plt.legend().get_texts():
@@ -125,7 +125,7 @@ def main():
 
     THEME = parameters["THEME"]
 
-    path = f"{parameters['PATH']}/{sys.argv[1]}/{sys.argv[2]}/{sys.argv[3]}"
+    path = f"{parameters['PATH']}/{parameters['ALGORITHM']}/{sys.argv[1]}/{sys.argv[2]}"
     df = pd.read_csv(f"{path}/data.csv")
 
     fig, ax = configPlot(parameters)
@@ -134,7 +134,7 @@ def main():
     data = [[] for i in range( len(pd.unique(df["run"])) )]
     for i in range(len(pd.unique(df["run"])) ):
         data[i] = df[df["run"] == i+1]
-        data[i] = data[i].drop_duplicates(subset=["gen"])[["gen", "bestError", "env"]]
+        data[i] = data[i].drop_duplicates(subset=["gen"], keep="last")[["gen", "bestError", "env"]]
         data[i].reset_index(inplace=True)
         if(parameters["ALLRUNS"]):
             ax = plot(ax, data=data[i], label=f"Run {i+1}", color=colors[i], parameters=parameters)
