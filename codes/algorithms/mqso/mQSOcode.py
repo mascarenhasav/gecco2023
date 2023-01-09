@@ -45,6 +45,8 @@ run = 0 # Current running
 peaks = 0
 env = 0
 changesEnv = [0 for _ in range(100)]
+sumFitness = 0
+Eo = 0
 
 '''
 Create the particle, with its initial position and speed
@@ -138,39 +140,19 @@ def writeLog(mode, filename, header, data=None):
 Fitness function. Returns the error between the fitness of the particle
 and the global optimum
 '''
-def evaluate(x, function, parameters=None, evalInc=1):
+def evaluate(x, function, parameters):
     global nevals
     fitInd = function(x)[0]
     globalOP = function.maximums()[0][0]
     fitness = [abs( fitInd - globalOP )]
-    if(evalInc):
-        nevals += 1
-    else:
-        function.nevals -= 1    # Dont increment the evals in the lib
-    changeEnvironment(function, parameters)
+    nevals += 1
+    if(parameters["CHANGE"]):
+        changeEnvironment(function, parameters)
     return fitness
 
 
 '''
-Update the evaluation of all particles after a change occurred
-'''
-def evaluateAll(pop, best, toolbox, mpb):
-    for swarm in pop:
-        for part, partId in zip(swarm, range(1, len(swarm)+1)):
-            part.fitness.values = toolbox.evaluate(part, mpb, 0)
-            # Check if the particles are the best of itself and best at all
-            if not part.best or part.best.fitness < part.fitness:
-                part.best = creator.Particle(part)
-                part.best.fitness.values = part.fitness.values
-
-        swarm.best.fitness.values = toolbox.evaluate(swarm.best, mpb, 0)
-
-    best.fitness.values = toolbox.evaluate(best, mpb, 0)
-
-    return pop, best
-
-'''
-This is to write the position and fitness of the peaks on
+Write the position and fitness of the peaks on
 the 'optima.csv' file. The number of the peaks will be
 NPEAKS_MPB*NCHANGES
 '''
@@ -242,7 +224,7 @@ def exclusion(pop, parameters, randomInit):
     reinit_swarms = set()
     for s1, s2 in itertools.combinations(range(len(pop)), 2):
         # Swarms must have a best and not already be set to reinitialize
-        if pop[s1].best and pop[s2].best and not (s1 in reinit_swarms or s2 in reinit_swarms):
+        if pop[s1].best and pop[s2].best and not (randomInit[s1] or randomInit[s2]):
             dist = 0
             for x1, x2 in zip(pop[s1].best, pop[s2].best):
                 dist += (x1 - x2)**2.
@@ -257,6 +239,15 @@ def exclusion(pop, parameters, randomInit):
 
 
 '''
+Apply ES on the particle
+'''
+def ES_particle(part, sbest, rcloud, parameters):
+    for i in range(parameters["NDIM"]):
+        part[i] = sbest[i] + random.uniform(-1, 1)*rcloud
+    return part
+
+
+'''
 Check if a change occurred in the environment
 '''
 def changeDetection(swarm, toolbox, mpb, parameters):
@@ -268,6 +259,10 @@ def changeDetection(swarm, toolbox, mpb, parameters):
         change = 1
     return change
 
+
+'''
+Reevaluate each particle attractor and update swarm best
+'''
 def reevaluateSwarm(swarm, best, toolbox, mpb, parameters):
     for part in swarm:
         part.best.fitness.values = toolbox.evaluate(part.best, mpb, parameters=parameters)
@@ -277,6 +272,10 @@ def reevaluateSwarm(swarm, best, toolbox, mpb, parameters):
 
     return swarm, best
 
+
+'''
+Change the environment if nevals reach the defined value
+'''
 def changeEnvironment(mpb, parameters):
     # Change environment
     global changesEnv
@@ -326,14 +325,16 @@ def mQSO(parameters):
 
     # Setup of MPB
     scenario = movingpeaks.SCENARIO_1
+    severity = parameters["MOVE_SEVERITY_MPB"]
     scenario["period"] = parameters["PERIOD_MPB"]
     scenario["npeaks"] = parameters["NPEAKS_MPB"]
     scenario["uniform_height"] = parameters["UNIFORM_HEIGHT_MPB"]
-    scenario["move_severity"] = parameters["MOVE_SEVERITY_MPB"]
+    scenario["move_severity"] = severity
     scenario["min_height"] = parameters["MIN_HEIGHT_MPB"]
     scenario["max_height"] = parameters["MAX_HEIGHT_MPB"]
     scenario["min_coord"] = parameters["MIN_COORD_MPB"]
     scenario["max_coord"] = parameters["MAX_COORD_MPB"]
+    rcloud = severity
 
     # Headers of the log files
     header = ["run", "gen", "nevals", "swarmId", "partId", "part", "partError", "sbest", "sbestError", "best", "bestError", "env"]
@@ -358,7 +359,6 @@ def mQSO(parameters):
         env = 1
         change = 0
         gen = 1
-        genControl = 0
         randomInit = [0 for _ in range(1, NSWARMS+2)]
         ES_particles = [i for i in range(1, int(SWARMSIZE/2)+1)]
 
@@ -371,8 +371,8 @@ def mQSO(parameters):
 
         mpb = movingpeaks.MovingPeaks(dim=parameters["NDIM"], random=rndMPB, **scenario)
 
-        # Create the population with size POPSIZE
-        pop = [toolbox.swarm(n=int(POPSIZE/NSWARMS)) for _ in range(NSWARMS)]
+        # Create the population with NSWARMS of size SWARMSIZE
+        pop = [toolbox.swarm(n=SWARMSIZE) for _ in range(NSWARMS)]
 
         # Save the optima values
         if(peaks <= parameters["NCHANGES"]):
@@ -404,14 +404,16 @@ def mQSO(parameters):
                     randomInit[swarmId] = 0
 
                 for partId, part in enumerate(swarm, 1):
-                    # If convergence or exclusion, randomize the particle
-                    if(randomInit[swarmId]):
-                        part = toolbox.particle()
-                    else:
-                        if(parameters["ES_PARTICLE_OP"] and partId in ES_particles):
+                    if(gen > 2):
+                        # If convergence or exclusion, randomize the particle
+                        if(randomInit[swarmId]):
                             part = toolbox.particle()
-                        elif swarm.best and part.best:
-                            toolbox.update(part, swarm.best)
+                        else:
+                            if(parameters["ES_PARTICLE_OP"]):
+                                if(partId in ES_particles):
+                                    part = ES_particle(part, swarm.best, rcloud, parameters)
+                            else:
+                                toolbox.update(part, swarm.best)
 
                     # Evaluate the particle
                     part.fitness.values = toolbox.evaluate(part, mpb, parameters=parameters)
@@ -436,9 +438,6 @@ def mQSO(parameters):
 
                 # Randomization complete
                 randomInit[swarmId] = 0
-
-
-                #pop[wswarmId] = toolbox.swarm(n=(parameters["POPSIZE"]/parameters["NSWARMS"]))
 
             gen += 1
 
