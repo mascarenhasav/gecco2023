@@ -130,19 +130,19 @@ def main():
 
     # Separate the dataset em subsets filtered by runs
     data = [[] for i in range( len(pd.unique(df["run"])) )]
-    swarm = [[] for i in range( len(pd.unique(df["swarm"])) )]
+    swarm = [[] for i in range( len(pd.unique(df["swarmId"])) )]
     for i in range(len(pd.unique(df["run"])) ): # Get the number of runs
         data[i] = df[df["run"] == i+1]
-        for j in range(len(pd.unique(data[i]["swarm"])) ): # Get the number of runs
-            swarm[j] = data[i][data[i]["swarm"] == j+1]
-            swarm[j] = swarm[j].drop_duplicates(subset=["gen"], keep="last")[["gen", "nevals", "swarm", "sbestError", "env"]]
+        for j in range(len(pd.unique(data[i]["swarmId"])) ): # Get the number of gens
+            swarm[j] = data[i][data[i]["swarmId"] == j+1]
+            swarm[j] = swarm[j].drop_duplicates(subset=["gen"], keep="last")[["gen", "nevals", "swarmId", "sbestError", "env"]]
             swarm[j].reset_index(inplace=True)
             del swarm[j]["index"]
-            swarm[j].to_csv(f"{path}/subsets/run{i}-swarm{j}.csv", index = True)
-        data[i] = data[i].drop_duplicates(subset=["gen"], keep="last")[["gen", "nevals", "swarm", "bestError", "env"]]
+            swarm[j].to_csv(f"{path}/subsets/run{i+1}-swarm{j+1}.csv", index = True)
+        data[i] = data[i].drop_duplicates(subset=["gen"], keep="last")[["gen", "nevals", "swarmId", "bestError", "env"]]
         data[i].reset_index(inplace=True)
         del data[i]["index"]
-        data[i].to_csv(f"{path}/subsets/run{i}.csv", index = True)
+        data[i].to_csv(f"{path}/subsets/run{i+1}.csv", index = True)
 
 
 

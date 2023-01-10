@@ -115,15 +115,16 @@ def main():
 
     fig, ax = configPlot(parameters)
 
-    print( len(pd.unique(df["run"])) )
+    #print( len(pd.unique(df["run"])) )
     data = [[] for i in range( len(pd.unique(df["run"])) )]
     best = [[] for i in range( len(pd.unique(df["run"])) )]
     part = [[] for i in range( len(pd.unique(df["run"])) )]
-    swarm = [[] for i in range( len(pd.unique(df["swarm"])) )]
-    bswarm = [[] for i in range( len(pd.unique(df["swarm"])) )]
+    if(parameters["ALGORITHM"] == "MPSO"):
+        swarm = [[] for i in range( len(pd.unique(df["swarm"])) )]
+        bswarm = [[] for i in range( len(pd.unique(df["swarm"])) )]
     for i in range(len(pd.unique(df["run"])) ):
         data[i] = df[df["run"] == i+1]
-        if(parameters["PLOT_SWARMS"]):
+        if(parameters["PLOT_SWARMS"] and parameters["ALGORITHM"] == "MPSO"):
             for j in range(len(pd.unique(data[i]["swarm"])) ): # Get the number of runs
                 swarm[j] = data[i][data[i]["swarm"] == j+1]
                 bswarm[j] = swarm[j].drop_duplicates(subset=["gen"], keep="last")[["sbest"]]
@@ -155,7 +156,7 @@ def main():
                 temp[j][i] =  temp[j][i].replace("]", "")
                 temp[j][i] =  float(temp[j][i])
 
-        print(temp)
+        #print(temp)
         x = [[x[1], x[2]] for x in temp]
         if(k == 0):
             ax = plot(ax, data=x, label=f"GOP", color="green", s=10, marker="*", conn=True)

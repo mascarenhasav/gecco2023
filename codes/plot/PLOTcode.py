@@ -59,22 +59,23 @@ def configPlot(parameters):
 
 
 def plot(ax, data, label, fStd=0, color="orange", parameters=False):
-    ax.plot(data["gen"], data["bestError"], color=color, label=label)
+    ax.plot(data["nevals"], data["bestError"], color=color, label=label)
     if(fStd):
-        ax.fill_between(data["gen"], data["bestError"] - data["std"], data["bestError"] + data["std"], color="dark"+color, alpha=0.3)
-    ax.set_xlabel("Generations", fontsize=15)
+        ax.fill_between(data["nevals"], data["bestError"] - data["std"], data["bestError"] + data["std"], color="dark"+color, alpha=0.3)
+    ax.set_xlabel("N Evaluations", fontsize=15)
     ax.set_ylabel("Error", fontsize=15)
     if(parameters["YLIM"]):
         ax.set_ylim(bottom=parameters["YLIM"][0], top=parameters["YLIM"][1])
     else:
         ax.set_ylim(bottom=0, top=0.1)
-    ax.set_xlim(1, len(data["gen"]))
+    ax.set_xlim(1, data["nevals"].iloc[-1])
+    #plt.xscale("log")
     return ax
 
 
 
 
-def showPlots(fig, ax, parameters):
+def showPlots(fig, ax, parameters, parameters2):
     path = f"{parameters['PATH']}/{parameters['ALGORITHM']}/{sys.argv[1]}/{sys.argv[2]}"
     THEME = parameters["THEME"]
     plt.legend()
@@ -86,7 +87,13 @@ def showPlots(fig, ax, parameters):
         text.set_fontsize(18)
     title = parameters["TITLE"]
     if(parameters["TITLE"] == 0):
-        title = f"{parameters['ALGORITHM']} on {parameters['BENCHMARK']}"
+        title = f"{parameters['ALGORITHM']} on {parameters['BENCHMARK']} \n\n \
+                POPSIZE: {parameters2['POPSIZE']}   \
+                M{parameters2['NSWARMS']}\
+                ES{parameters2['ES_PARTICLE_OP']}\
+                EX{parameters2['EXCLUSION_OP']}\
+                AC{parameters2['ANTI_CONVERGENCE_OP']}\
+                "
     ax.set_title(title, fontsize=20)
     plt.savefig(f"{path}/{parameters['NAME']}", format="png")
     plt.show()
@@ -108,8 +115,8 @@ def mean(data):
         sum = 0
         std = [0 for i in range( len(data) )]
 
-    zipped = list(zip(data[0]["gen"], bMean, bStd))
-    bestMean = pd.DataFrame(zipped, columns=["gen", "bestError", "std"])
+    zipped = list(zip(data[0]["nevals"], bMean, bStd))
+    bestMean = pd.DataFrame(zipped, columns=["nevals", "bestError", "std"])
     return bestMean
 
 
@@ -123,10 +130,13 @@ def main():
         print("Parameters:")
         print(parameters)
 
-    THEME = parameters["THEME"]
-
     path = f"{parameters['PATH']}/{parameters['ALGORITHM']}/{sys.argv[1]}/{sys.argv[2]}"
     df = pd.read_csv(f"{path}/data.csv")
+
+    with open(f"{path}/config.ini") as f:
+        parameters2 = json.loads(f.read())
+
+    THEME = parameters["THEME"]
 
     fig, ax = configPlot(parameters)
 
@@ -134,18 +144,23 @@ def main():
     data = [[] for i in range( len(pd.unique(df["run"])) )]
     for i in range(len(pd.unique(df["run"])) ):
         data[i] = df[df["run"] == i+1]
-        data[i] = data[i].drop_duplicates(subset=["gen"], keep="last")[["gen", "bestError", "env"]]
+        data[i] = data[i].drop_duplicates(subset=["gen"], keep="last")[["gen", "nevals", "bestError", "env"]]
         data[i].reset_index(inplace=True)
         if(parameters["ALLRUNS"]):
             ax = plot(ax, data=data[i], label=f"Run {i+1}", color=colors[i], parameters=parameters)
 
     bestMean = mean(data)
     ax = plot(ax, data=bestMean, label="Mean", color="green", fStd=1, parameters=parameters)
-    changesEnv = data[0].ne(data[0].shift()).filter(like="env").apply(lambda x: x.index[x].tolist())["env"][1:]
-    print(changesEnv)
+
+
+    if(parameters2["RANDOM_CHANGES"]):
+        changesEnv = parameters2["CHANGES_NEVALS"]
+    else:
+        changesEnv = parameters2["CHANGES_NEVALS"]
+    #changesEnv = data[0].ne(data[0].shift()).filter(like="env").apply(lambda x: x.index[x].tolist())["env"][1:]
     for i in changesEnv:
-        plt.axvline(int(i)+1, color="black", linestyle="--")
-    showPlots(fig, ax, parameters)
+        plt.axvline(int(i), color="black", linestyle="--")
+    showPlots(fig, ax, parameters, parameters2)
 
 
 if __name__ == "__main__":

@@ -5,7 +5,7 @@ Alexandre Mascarenhas
 
 2023/1
 '''
-
+import sys
 import json
 import shutil
 import itertools
@@ -217,7 +217,11 @@ def pso(parameters):
 
         # Initialize the benchmark for each run with seed being the minute
         rndMPB = random.Random()
-        rndMPB.seed(minute**5)
+        try:
+            rndMPB.seed(int(sys.argv[1])**5)
+        except IndexError:
+            rndMPB.seed(minute**5)
+
         mpb = movingpeaks.MovingPeaks(dim=parameters["NDIM"], random=rndMPB, **scenario)
 
         # Create the population with size POPSIZE
