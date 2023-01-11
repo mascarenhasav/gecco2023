@@ -2,7 +2,7 @@ rm(list = ls(all = TRUE))
 
 library(jsonlite)
 
-setwd("~/Documents/estudos/pso_dynamics/gecco2023/codes/algorithms/adpso/")
+setwd("~/pso_dynamic/gecco2023/codes/algorithms/adpso/")
 
 options(scipen = 999)
 
@@ -10,7 +10,7 @@ suppressPackageStartupMessages(library(irace))
 suppressPackageStartupMessages(library(reticulate))
 suppressPackageStartupMessages(library(parallel))
 
-use_python("/Users/yurilavinas/miniforge3/bin/python")
+#use_python("/Users/yurilavinas/miniforge3/bin/python")
 
 
 
@@ -25,7 +25,7 @@ scenario$debugLevel     <- 0
 scenario$maxExperiments <- 20000 # Tuning budget
 scenario$testNbElites   <-
   1     # test all final elite configurations
-scenario$parallel       <- 5
+scenario$parallel       <- 8
 scenario$digits       <- 2
 
 
@@ -38,9 +38,9 @@ parameters <- readParameters("../../irace/parameters.txt")
 
 #===============
 ### Build training instances
-fname1 <- (paste0("mpb_", c(10))) #mpb + num of peaks
-dimensions1 = c(5) # dimensions
-severity1 = c(1)
+fname1 <- (paste0("mpb_", c(8,10))) #mpb + num of peaks
+dimensions1 = c(8,10) # dimensions
+severity1 = c(1,3,5)
 allfuns1          <-
   expand.grid(fname1, dimensions1, severity1, stringsAsFactors = FALSE)
 
@@ -49,7 +49,7 @@ scenario$instances <- paste0(allfuns1[, 1], "_", allfuns1[, 2], "_", allfuns1[, 
 ### Build test instances
 fname2 <- (paste0("mpb_", c(7,9))) #mpb + num of peaks
 dimensions2 = c(7,9) # dimensions
-severity1 = c(2,4)
+severity1 = c(2,4,6)
 allfuns2            <-
   expand.grid(fname2, dimensions2, stringsAsFactors = FALSE)
 
