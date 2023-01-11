@@ -58,6 +58,10 @@ being randomly generated
 '''
 def ale(seed, min, max):
     return random.uniform(min, max)
+  
+'''
+using ale() from above
+'''
 def generate(ndim, pmin, pmax, smin, smax):
     part = creator.Particle(ale(i, pmin, pmax) for i in range(ndim))
     part.speed = [ale(i, smin, smax) for i in range(ndim)]
@@ -81,32 +85,6 @@ def updateParticle(part, best, phi1, phi2):
             part.speed[i] = math.copysign(part.smax, speed)
     part[:] = list(map(operator.add, part, part.speed))
 
-'''
-Convert particles to probabilistic particle
-'''
-def convertQuantum(swarm, rcloud, centre, dist):
-    dim = len(swarm[0])
-    for part in swarm:
-        position = [random.gauss(0, 1) for _ in range(dim)]
-        dist = math.sqrt(sum(x**2 for x in position))
-
-        if dist == "gaussian":
-            u = abs(random.gauss(0, 1.0/3.0))
-            part[:] = [(rcloud * x * u**(1.0/dim) / dist) + c for x, c in zip(position, centre)]
-
-        elif dist == "uvd":
-            u = random.random()
-            part[:] = [(rcloud * x * u**(1.0/dim) / dist) + c for x, c in zip(position, centre)]
-
-        elif dist == "nuvd":
-            u = abs(random.gauss(0, 1.0/3.0))
-            part[:] = [(rcloud * x * u / dist) + c for x, c in zip(position, centre)]
-
-        del part.fitness.values
-        del part.bestfit.values
-        part.best = None
-
-    return swarm
 
 '''
 Define the functions responsibles to create the objects of the algorithm
@@ -144,14 +122,14 @@ def writeLog(mode, filename, header, data=None):
 Fitness function. Returns the error between the fitness of the particle
 and the global optimum
 '''
-def evaluate(x, function, parameters):
+def evaluate(x, function, parameters, exp_folder):
     global nevals
     fitInd = function(x)[0]
     globalOP = function.maximums()[0][0]
     fitness = [abs( fitInd - globalOP )]
     nevals += 1
     if(parameters["CHANGE"]):
-        changeEnvironment(function, parameters)
+        changeEnvironment(function, parameters, exp_folder)
     return fitness
 
 
@@ -160,11 +138,11 @@ Write the position and fitness of the peaks on
 the 'optima.csv' file. The number of the peaks will be
 NPEAKS_MPB*NCHANGES
 '''
-def saveOptima(parameters, mpb, path):
+def saveOptima(parameters, mpb, exp_folder):
     opt = [0 for _ in range(parameters["NPEAKS_MPB"])]
     for i in range(parameters["NPEAKS_MPB"]):
         opt[i] = mpb.maximums()[i]
-    with open(f"{path}/optima.csv", "a") as f:
+    with open(f"{exp_folder}/optima.csv", "a") as f:
         write = csv.writer(f)
         write.writerow(opt)
 
@@ -257,7 +235,7 @@ def ES_particle(part, sbest, parameters, P=1):
 '''
 Apply LS on the best
 '''
-def localSearch(best, toolbox, parameters, mpb):
+def localSearch(best, toolbox, parameters, mpb, exp_folder):
     if(parameters["RLS"]):
         rls = parameters["RLS"]
     else:
@@ -266,7 +244,7 @@ def localSearch(best, toolbox, parameters, mpb):
     for _ in range(parameters["ETRY"]):
         for i in range(parameters["NDIM"]):
             bp[i] = bp[i] + random.uniform(-1, 1)*rls
-        bp.fitness.values = toolbox.evaluate(bp, mpb, parameters=parameters)
+        bp.fitness.values = toolbox.evaluate(bp, mpb, parameters=parameters, exp_folder=exp_folder)
         if bp.fitness > best.fitness:
             best = creator.Particle(bp)
             best.fitness.values = bp.fitness.values
@@ -276,9 +254,9 @@ def localSearch(best, toolbox, parameters, mpb):
 '''
 Check if a change occurred in the environment
 '''
-def changeDetection(swarm, toolbox, mpb, parameters):
+def changeDetection(swarm, toolbox, mpb, parameters, exp_folder):
     change = 0
-    sensor = toolbox.evaluate(swarm.best, mpb, parameters=parameters)
+    sensor = toolbox.evaluate(swarm.best, mpb, parameters=parameters, exp_folder=exp_folder)
     if(sensor[0] != swarm.best.fitness.values[0]):
         #print(f"[CHANGE] nevals: {nevals}  sensor: {sensor}  sbest:{swarm.best.fitness.values[0]}")
         swarm.best.fitness.values = sensor
@@ -291,14 +269,14 @@ Reevaluate each particle attractor and update swarm best
 If ES_CHANGE_OP is activated, the position of particles is
 changed by ES strategy
 '''
-def reevaluateSwarm(swarm, best, toolbox, mpb, parameters):
+def reevaluateSwarm(swarm, best, toolbox, mpb, parameters, exp_folder):
     for part in swarm:
 
         if(parameters["ES_CHANGE_OP"]):
             part = ES_particle(part, swarm.best, parameters)
             part.best = part
 
-        part.best.fitness.values = toolbox.evaluate(part.best, mpb, parameters=parameters)
+        part.best.fitness.values = toolbox.evaluate(part.best, mpb, parameters=parameters, exp_folder=exp_folder)
         if not swarm.best or swarm.best.fitness < part.best.fitness:
             swarm.best = creator.Particle(part.best)
             swarm.best.fitness.values = part.best.fitness.values
@@ -309,7 +287,7 @@ def reevaluateSwarm(swarm, best, toolbox, mpb, parameters):
 '''
 Change the environment if nevals reach the defined value
 '''
-def changeEnvironment(mpb, parameters):
+def changeEnvironment(mpb, parameters, exp_folder):
     # Change environment
     global changesEnv
     global nevals
@@ -320,7 +298,7 @@ def changeEnvironment(mpb, parameters):
         mpb.changePeaks() # Change the environment
         env += 1
         if(peaks <= parameters["NCHANGES"]): # Save the optima values
-            saveOptima(parameters, mpb, path)
+            saveOptima(parameters, mpb, exp_folder)
             peaks += 1
         #print(f"MUDOU nevals: {nevals}")
 
@@ -328,7 +306,7 @@ def changeEnvironment(mpb, parameters):
 '''
 Algorithm
 '''
-def mQSO(parameters):
+def adpso(parameters, exp_folder):
     # Create the DEAP creators
     creator.create("FitnessMax", base.Fitness, weights=(-1.0,))
     creator.create("Particle", list, fitness=creator.FitnessMax, speed=list,
@@ -349,11 +327,12 @@ def mQSO(parameters):
     SWARMSIZE = int(POPSIZE/NSWARMS)
     RUNS = parameters["RUNS"]
     debug = parameters["DEBUG"]
-    path = f"{parameters['PATH']}/{parameters['ALGORITHM']}"
+    # path = f"{parameters['PATH']}/{parameters['ALGORITHM']}"
 
     # Check if the dirs already exist otherwise create them
-    path = checkDirs(path)
-    filename = f"{path}/{parameters['FILENAME']}"
+    # path = checkDirs(path)
+    # filename = f"{path}/{parameters['FILENAME']}"
+    filename = f"{exp_folder}/{parameters['FILENAME']}"
 
 
     # Setup of MPB
@@ -374,7 +353,8 @@ def mQSO(parameters):
     header = ["run", "gen", "nevals", "swarmId", "partId", "part", "partError", "sbest", "sbestError", "best", "bestError", "env"]
     writeLog(mode=0, filename=filename, header=header)
     headerOPT = [f"opt{i}" for i in range(parameters["NPEAKS_MPB"])]
-    writeLog(mode=0, filename=f"{path}/optima.csv", header=headerOPT)
+    # writeLog(mode=0, filename=f"{path}/optima.csv", header=headerOPT)
+    writeLog(mode=0, filename=f"{exp_folder}/optima.csv", header=headerOPT)
 
     # Create the toolbox functions
     toolbox = createToolbox(parameters)
@@ -401,7 +381,7 @@ def mQSO(parameters):
         try:
             rndMPB.seed(int(sys.argv[1])**5)
         except IndexError:
-            rndMPB.seed(minute**5)
+            rndMPB.seed(42**5)
 
         mpb = movingpeaks.MovingPeaks(dim=parameters["NDIM"], random=rndMPB, **scenario)
 
@@ -410,7 +390,7 @@ def mQSO(parameters):
 
         # Save the optima values
         if(peaks <= parameters["NCHANGES"]):
-            saveOptima(parameters, mpb, path)
+            saveOptima(parameters, mpb, exp_folder)
             peaks += 1
 
         # Repeat until reach the number of evals
@@ -426,17 +406,17 @@ def mQSO(parameters):
 
             # Local search operator
             if(parameters["LOCAL_SEARCH_OP"] and gen > 2):
-                best = localSearch(best, toolbox, parameters, mpb)
+                best = localSearch(best, toolbox, parameters, mpb, exp_folder)
 
             # PSO
             for swarmId, swarm in enumerate(pop, 1):
 
                 # Change detection
                 if(parameters["CHANGE_DETECTION_OP"] and swarm.best):
-                    change = changeDetection(swarm, toolbox, mpb, parameters=parameters)
+                    change = changeDetection(swarm, toolbox, mpb, parameters=parameters, exp_folder=exp_folder)
 
                 if(change and swarm):
-                    swarm, best = reevaluateSwarm(swarm, best, toolbox, mpb, parameters=parameters)
+                    swarm, best = reevaluateSwarm(swarm, best, toolbox, mpb, parameters=parameters, exp_folder=exp_folder)
                     best = None
                     #print(f"[CHANGE] sbest:{swarm.best.fitness.values[0]}")
                     randomInit[swarmId] = 0
@@ -452,11 +432,11 @@ def mQSO(parameters):
                                 if(partId in ES_particles):
                                     part = ES_particle(part, swarm.best, parameters)
                             else:
-                                print("AEEEE PSO")
+                                # print("AEEEE PSO")
                                 toolbox.update(part, swarm.best)
 
                     # Evaluate the particle
-                    part.fitness.values = toolbox.evaluate(part, mpb, parameters=parameters)
+                    part.fitness.values = toolbox.evaluate(part, mpb, parameters=parameters, exp_folder=exp_folder)
 
                     # Check if the particles are the best of itself and best at all
                     if not part.best or part.best.fitness < part.fitness:
@@ -481,36 +461,44 @@ def mQSO(parameters):
 
             gen += 1
 
-        if(True):
-            print(f"[RUN:{run:02}][GEN:{gen:03}][NEVALS:{nevals:05}] Best:{best.fitness.values[0]:.4f}")
+        # if(True):
+        #     print(f"[RUN:{run:02}][GEN:{gen:03}][NEVALS:{nevals:05}] Best:{best.fitness.values[0]:.4f}")
 
 
 
     # Copy the config.ini file to the experiment dir
-    shutil.copyfile("config.ini", f"{path}/config.ini")
-    print(f"File generated: {path}/data.csv \nThx!")
+    shutil.copyfile("config.ini", f"{exp_folder}/config.ini")
+    # print(f"File generated: {path}/data.csv \nThx!")
 
-
-
-def main():
-    # Read the parameters from the config file
-    with open("./config.ini") as f:
+def call_adpso(exp_folder):
+#     # Read the parameters from the config file
+    filename = f"{exp_folder}/config.ini"
+    with open(filename) as f:
         parameters = json.loads(f.read())
-    debug = parameters["DEBUG"]
-    if(debug):
-        print("Parameters:")
-        print(parameters)
-
+    
     # Call the algorithm
-    mQSO(parameters)
-
-    # For automatic calling of the plot functions
-    if(parameters["PLOT"]):
-        os.system(f"python3 ../../PLOTcode.py {parameters['ALGORITHM']} {year}-{month}-{day} {hour}-{minute}")
-        os.system(f"python3 ../../PLOT2code.py {parameters['ALGORITHM']} {year}-{month}-{day} {hour}-{minute}")
+    adpso(parameters, exp_folder)
 
 
-if __name__ == "__main__":
-    main()
+# def main():
+#     # Read the parameters from the config file
+#     with open("./config.ini") as f:
+#         parameters = json.loads(f.read())
+#     debug = parameters["DEBUG"]
+#     if(debug):
+#         print("Parameters:")
+#         print(parameters)
+
+#     # Call the algorithm
+#     mQSO(parameters)
+
+#     # For automatic calling of the plot functions
+#     if(parameters["PLOT"]):
+#         os.system(f"python3 ../../PLOTcode.py {parameters['ALGORITHM']} {year}-{month}-{day} {hour}-{minute}")
+#         os.system(f"python3 ../../PLOT2code.py {parameters['ALGORITHM']} {year}-{month}-{day} {hour}-{minute}")
+
+
+# if __name__ == "__main__":
+#     main()
 
 
