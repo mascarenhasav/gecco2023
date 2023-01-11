@@ -26,7 +26,7 @@ minute = cDate.minute
 
 def writeTXT(data, name, path):
     line = f"- {name}= {data[0]:.4f}({data[1]:.4f})\n"
-    print(line)
+    # print(line)
     f = open(f"{path}/results.txt","a")
     f.write(line)
     f.close()
@@ -80,33 +80,33 @@ def offlineError(path, std=1):
 
 
 
-def main():
-    # reading the parameters from the config file
-    try:
-        path = sys.argv[1]
-    except IndexError:
-        with open("./config.ini") as f:
-            parameters = json.loads(f.read())
-        debug = parameters["DEBUG"]
-        if(debug):
-            print("Parameters:")
-            print(parameters)
-        #path = f"{parameters['PATH']}/{parameters['ALGORITHM']}/{sys.argv[1]}/{sys.argv[2]}"
-    try:
-        std = int(sys.argv[2])
-    except IndexError:
-        std = 0
-
-    eo = offlineError(path, std=std)
-    bobc = bestErrorBeforeChange(path, std)
-
-    if(std):
-        print(f"[Offline Error]       Eo:  {eo[0]:.4f}({eo[1]:.4f})")
-        print(f"[Best before change]  Ebc: {bobc[0]:.4f}({bobc[1]:.4f})")
-    else:
-        print(f"[Offline Error]       Eo:  {eo:.4f}")
-        print(f"[Best before change]  Ebc: {bobc:.4f}")
-
-
-if __name__ == "__main__":
-    main()
+# def main():
+#     # reading the parameters from the config file
+#     try:
+#         path = sys.argv[1]
+#     except IndexError:
+#         with open("./config.ini") as f:
+#             parameters = json.loads(f.read())
+#         debug = parameters["DEBUG"]
+#         if(debug):
+#             print("Parameters:")
+#             print(parameters)
+#         #path = f"{parameters['PATH']}/{parameters['ALGORITHM']}/{sys.argv[1]}/{sys.argv[2]}"
+#     try:
+#         std = int(sys.argv[2])
+#     except IndexError:
+#         std = 0
+# 
+#     eo = offlineError(path, std=std)
+#     bobc = bestErrorBeforeChange(path, std)
+# 
+#     if(std):
+#         print(f"[Offline Error]       Eo:  {eo[0]:.4f}({eo[1]:.4f})")
+#         print(f"[Best before change]  Ebc: {bobc[0]:.4f}({bobc[1]:.4f})")
+#     else:
+#         print(f"[Offline Error]       Eo:  {eo:.4f}")
+#         print(f"[Best before change]  Ebc: {bobc:.4f}")
+# 
+# 
+# if __name__ == "__main__":
+#     main()
