@@ -7,7 +7,7 @@ Based on:
 in dynamic environments,” IEEE Transactions on Evolutionary Computation,
 vol. 10, no. 4, pp. 459–472, 2006."
 and
-D. Yazdani, B. Nasiri, A. Sepas-Moghaddam, and M. R. Meybodi, “A novel
+"D. Yazdani, B. Nasiri, A. Sepas-Moghaddam, and M. R. Meybodi, “A novel
 multi-swarm algorithm for optimization in dynamic environments based on
 particle swarm optimization,” Applied Soft Computing, vol. 13, no. 04,
 pp. 2144–2158, 2013."
@@ -30,11 +30,14 @@ import os
 import csv
 import ast
 import sys
+import getopt
 from deap import base
 from deap import benchmarks
 from deap import creator
 from deap import tools
 from deap.benchmarks import movingpeaks
+import time
+
 
 
 # datetime variables
@@ -51,6 +54,7 @@ run = 0 # Current running
 peaks = 0
 env = 0
 changesEnv = [0 for _ in range(100)]
+path = ""
 
 '''
 Create the particle, with its initial position and speed
@@ -81,32 +85,6 @@ def updateParticle(part, best, phi1, phi2):
             part.speed[i] = math.copysign(part.smax, speed)
     part[:] = list(map(operator.add, part, part.speed))
 
-'''
-Convert particles to probabilistic particle
-'''
-def convertQuantum(swarm, rcloud, centre, dist):
-    dim = len(swarm[0])
-    for part in swarm:
-        position = [random.gauss(0, 1) for _ in range(dim)]
-        dist = math.sqrt(sum(x**2 for x in position))
-
-        if dist == "gaussian":
-            u = abs(random.gauss(0, 1.0/3.0))
-            part[:] = [(rcloud * x * u**(1.0/dim) / dist) + c for x, c in zip(position, centre)]
-
-        elif dist == "uvd":
-            u = random.random()
-            part[:] = [(rcloud * x * u**(1.0/dim) / dist) + c for x, c in zip(position, centre)]
-
-        elif dist == "nuvd":
-            u = abs(random.gauss(0, 1.0/3.0))
-            part[:] = [(rcloud * x * u / dist) + c for x, c in zip(position, centre)]
-
-        del part.fitness.values
-        del part.bestfit.values
-        part.best = None
-
-    return swarm
 
 '''
 Define the functions responsibles to create the objects of the algorithm
@@ -121,7 +99,6 @@ def createToolbox(parameters):
     toolbox.register("population", tools.initRepeat, list, toolbox.particle)
     toolbox.register("swarm", tools.initRepeat, creator.Swarm, toolbox.particle)
     toolbox.register("update", updateParticle, phi1=parameters["phi1"], phi2=parameters["phi2"])
-    toolbox.register("convert", convertQuantum, dist="nuvd")
     toolbox.register("evaluate", evaluate)
     return toolbox
 
@@ -139,6 +116,8 @@ def writeLog(mode, filename, header, data=None):
         with open(filename, mode="a") as file:
             csvwriter = csv.DictWriter(file, fieldnames=header)
             csvwriter.writerows(data)
+           # for i in range(len(data)):
+           #     csvwriter.writerows(data[i])
 
 '''
 Fitness function. Returns the error between the fitness of the particle
@@ -318,7 +297,7 @@ def changeEnvironment(mpb, parameters):
     global path
     if(nevals in changesEnv):
         mpb.changePeaks() # Change the environment
-        env += 1
+        #env += 1
         if(peaks <= parameters["NCHANGES"]): # Save the optima values
             saveOptima(parameters, mpb, path)
             peaks += 1
@@ -328,7 +307,8 @@ def changeEnvironment(mpb, parameters):
 '''
 Algorithm
 '''
-def mQSO(parameters):
+def adpso(parameters, seed):
+    startTime = time.time()
     # Create the DEAP creators
     creator.create("FitnessMax", base.Fitness, weights=(-1.0,))
     creator.create("Particle", list, fitness=creator.FitnessMax, speed=list,
@@ -349,12 +329,6 @@ def mQSO(parameters):
     SWARMSIZE = int(POPSIZE/NSWARMS)
     RUNS = parameters["RUNS"]
     debug = parameters["DEBUG"]
-    path = f"{parameters['PATH']}/{parameters['ALGORITHM']}"
-
-    # Check if the dirs already exist otherwise create them
-    path = checkDirs(path)
-    filename = f"{path}/{parameters['FILENAME']}"
-
 
     # Setup of MPB
     scenario = movingpeaks.SCENARIO_1
@@ -369,6 +343,7 @@ def mQSO(parameters):
     scenario["max_coord"] = parameters["MAX_COORD_MPB"]
     rcloud = severity
     rls = severity
+    filename = f"{path}/{parameters['FILENAME']}"
 
     # Headers of the log files
     header = ["run", "gen", "nevals", "swarmId", "partId", "part", "partError", "sbest", "sbestError", "best", "bestError", "env"]
@@ -393,15 +368,13 @@ def mQSO(parameters):
         env = 1
         change = 0
         gen = 1
+        flagEnv = 0
         randomInit = [0 for _ in range(1, NSWARMS+2)]
         ES_particles = [i for i in range(1, int(parameters["ES_PARTICLE_PERC"]*SWARMSIZE)+1)]
 
         # Initialize the benchmark for each run with seed being the minute
         rndMPB = random.Random()
-        try:
-            rndMPB.seed(int(sys.argv[1])**5)
-        except IndexError:
-            rndMPB.seed(minute**5)
+        rndMPB.seed(seed**5)
 
         mpb = movingpeaks.MovingPeaks(dim=parameters["NDIM"], random=rndMPB, **scenario)
 
@@ -439,6 +412,10 @@ def mQSO(parameters):
                     swarm, best = reevaluateSwarm(swarm, best, toolbox, mpb, parameters=parameters)
                     best = None
                     #print(f"[CHANGE] sbest:{swarm.best.fitness.values[0]}")
+                    flagEnv += 1
+                    if(flagEnv==NSWARMS):
+                        env += 1
+                        flagEnv = 0
                     randomInit[swarmId] = 0
 
                 for partId, part in enumerate(swarm, 1):
@@ -448,11 +425,11 @@ def mQSO(parameters):
                             part = toolbox.particle()
                         else:
                             # ES Particle operator
-                            if(parameters["ES_PARTICLE_OP"]):
-                                if(partId in ES_particles):
-                                    part = ES_particle(part, swarm.best, parameters)
+                            #if(parameters["ES_PARTICLE_OP"]):
+                            if(partId in ES_particles):
+                                part = ES_particle(part, swarm.best, parameters)
                             else:
-                                print("AEEEE PSO")
+                                #print("AEEEE PSO")
                                 toolbox.update(part, swarm.best)
 
                     # Evaluate the particle
@@ -470,8 +447,8 @@ def mQSO(parameters):
                         best.fitness.values = part.fitness.values
 
                     # Save the log
-                    log = [{"run": run, "gen": gen, "nevals":nevals, "swarmId": swarmId, "partId": partId, "part":part, "partError": part.best.fitness.values[0], "sbest": swarm.best, "sbestError": swarm.best.fitness.values[0], "best": best, "bestError": best.fitness.values[0], "env": env}]
-                    writeLog(mode=1, filename=filename, header=header, data=log)
+                    #log = [{"run": run, "gen": gen, "nevals":nevals, "swarmId": swarmId, "partId": partId, "part":part, "partError": part.best.fitness.values[0], "sbest": swarm.best, "sbestError": swarm.best.fitness.values[0], "best": best, "bestError": best.fitness.values[0], "env": env}]
+                    #writeLog(mode=1, filename=filename, header=header, data=log)
 
                     if(debug):
                         print(log)
@@ -479,18 +456,29 @@ def mQSO(parameters):
                 # Randomization complete
                 randomInit[swarmId] = 0
 
+
+            #Save the log
+            log = [{"run": run, "gen": gen, "nevals":nevals, "best": best, "bestError": best.fitness.values[0], "env": env}]
+            writeLog(mode=1, filename=filename, header=header, data=log)
             gen += 1
 
+        #writeLog(mode=1, filename=filename, header=header, data=log)
         if(True):
             print(f"[RUN:{run:02}][GEN:{gen:03}][NEVALS:{nevals:05}] Best:{best.fitness.values[0]:.4f}")
 
-
-
     # Copy the config.ini file to the experiment dir
     shutil.copyfile("config.ini", f"{path}/config.ini")
+    executionTime = (time.time() - startTime)
     print(f"File generated: {path}/data.csv \nThx!")
+    print('Execution time in seconds: ' + str(executionTime))
 
 
+def call_adpso(exp_path):
+    # Read the parameters from the config file
+    with open("{exp_folder}/config.ini") as f:
+        parameters = json.loads(f.read())
+
+    call_adpso(parameters, exp_folder)
 
 def main():
     # Read the parameters from the config file
@@ -501,8 +489,37 @@ def main():
         print("Parameters:")
         print(parameters)
 
+    global path
+
+    arg_help = "{0} -s <seed> -p <path>".format(sys.argv[0])
+    seed = 0
+
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], "hs:p:", ["help", "seed=", "path="])
+    except:
+        print(arg_help)
+        sys.exit(2)
+
+    for opt, arg in opts:
+        if opt in ("-h", "--help"):
+            print(arg_help)  # print the help message
+            sys.exit(2)
+        if opt in ("-s", "--seed"):
+            seed = arg
+        else:
+            seed = minute
+        if opt in ("-p", "--path"):
+            path = arg
+        else:
+            path = f"{parameters['PATH']}/{parameters['ALGORITHM']}"
+            path = checkDirs(path)
+
+    print('seed:', seed)
+    print('path:', path)
+
     # Call the algorithm
-    mQSO(parameters)
+    adpso(parameters, seed)
+    #call_adpso()
 
     # For automatic calling of the plot functions
     if(parameters["PLOT"]):
