@@ -481,18 +481,10 @@ def call_adpso(exp_path):
     call_adpso(parameters, exp_folder)
 
 def main():
-    # Read the parameters from the config file
-    with open("./config.ini") as f:
-        parameters = json.loads(f.read())
-    debug = parameters["DEBUG"]
-    if(debug):
-        print("Parameters:")
-        print(parameters)
-
     global path
-
+    seed = minute
     arg_help = "{0} -s <seed> -p <path>".format(sys.argv[0])
-    seed = 0
+    path = "."
 
     try:
         opts, args = getopt.getopt(sys.argv[1:], "hs:p:", ["help", "seed=", "path="])
@@ -504,22 +496,27 @@ def main():
         if opt in ("-h", "--help"):
             print(arg_help)  # print the help message
             sys.exit(2)
-        if opt in ("-s", "--seed"):
+        elif opt in ("-s", "--seed"):
             seed = arg
-        else:
-            seed = minute
-        if opt in ("-p", "--path"):
+        elif opt in ("-p", "--path"):
             path = arg
-        else:
-            path = f"{parameters['PATH']}/{parameters['ALGORITHM']}"
-            path = checkDirs(path)
 
     print('seed:', seed)
     print('path:', path)
+    # Read the parameters from the config file
+    with open(f"{path}/config.ini") as f:
+        parameters = json.loads(f.read())
+    debug = parameters["DEBUG"]
+    if(debug):
+        print("Parameters:")
+        print(parameters)
+
+    if path == ".":
+        path = f"{parameters['PATH']}/{parameters['ALGORITHM']}"
+        path = checkDirs(path)
 
     # Call the algorithm
     adpso(parameters, seed)
-    #call_adpso()
 
     # For automatic calling of the plot functions
     if(parameters["PLOT"]):
