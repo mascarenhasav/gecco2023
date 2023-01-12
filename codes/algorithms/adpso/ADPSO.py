@@ -374,7 +374,7 @@ def adpso(parameters, seed):
 
         # Initialize the benchmark for each run with seed being the minute
         rndMPB = random.Random()
-        rndMPB.seed(seed**5)
+        rndMPB.seed(int(seed)**5)
 
         mpb = movingpeaks.MovingPeaks(dim=parameters["NDIM"], random=rndMPB, **scenario)
 
