@@ -97,7 +97,7 @@ def main():
     except IndexError:
         std = 0
 
-    eo = offlineError(path, std=std)
+    eo = offlineError(path, std)
     bobc = bestErrorBeforeChange(path, std)
 
     if(std):
