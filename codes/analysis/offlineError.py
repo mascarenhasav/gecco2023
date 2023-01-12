@@ -16,6 +16,7 @@ import datetime
 import os
 import csv
 import sys
+import time
 
 cDate = datetime.datetime.now()
 year = cDate.year
@@ -32,6 +33,7 @@ def writeTXT(data, name, path):
     f.close()
 
 def offlineError(path, std=1):
+    startTime = time.time()
     df = pd.read_csv(f"{path}/data.csv")
     data = [[] for i in range( len(pd.unique(df["run"])) )]
     for i in range(len(pd.unique(df["run"])) ): # Get the number of runs
@@ -50,6 +52,8 @@ def offlineError(path, std=1):
 
     eo = [np.mean(luffy), np.std(luffy)]
 
+    executionTime = (time.time() - startTime)
+    print('Execution time in seconds: ' + str(executionTime))
     if(std):
         return eo
     else:

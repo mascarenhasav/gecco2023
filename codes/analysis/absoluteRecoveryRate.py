@@ -40,7 +40,7 @@ def absoluteRecoveryRate(path, std=1):
         data[i] = df[df["run"] == i+1]
         for j in range(len(pd.unique(df["env"]))):
             env[i][j] = data[i][["nevals", "bestError", "env"]][data[i]["env"] == i+1]
-            #env[i][j].to_csv(f"{path}/Run{i+1}-Env{j}.csv", index = True)
+            env[i][j].to_csv(f"{path}/Run{i+1}-Env{j}.csv", index = True)
         data[i] = data[i].drop_duplicates(subset=["gen"], keep="last")[["gen", "nevals", "swarmId", "bestError", "env"]]
         data[i].reset_index(inplace=True)
         del data[i]["index"]
@@ -52,11 +52,19 @@ def absoluteRecoveryRate(path, std=1):
     luffy = [[0 for i in range(NENVS)] for _ in range(NRUNS)]
     zoro = [0 for _ in range(NRUNS)]
 
+    print(env[1][0]['bestError'])
+    #p()
+
     print(f"[NEVALS:{NEVALS}][NRUNS:{NRUNS}][NENVS:{NENVS}]")
     for j in range(NRUNS):
         for i in range(NENVS):
-            print(f"[ENV:{i+1}][GLOBAL: {optima['opt0'][i]}]")
-            luffy[j][i] = (np.sum(env[j][i]['bestError'])/NEVALS)
+            erro = 0
+            for k in range(len(env[j][i]['bestError'])):
+               # print(f"[RUN:{j}][ENV:{i}][GEN:{k}]")
+               # print(f"[RUN:{j}][ENV:{i}][GEN:{k}]: {abs(env[j][i]['bestError'][k] - env[j][i]['bestError'][0] )} ")
+                erro += abs(env[j][i]['bestError'][k] - env[j][i]['bestError'][0])
+            erro /= len(env[j][i]['bestError'])*abs(float(optima['opt0'][i][1:10]) - env[j][i]['bestError'][0])
+            luffy[j][i] = erro
 
     for j in range(NRUNS):
         zoro[j] = np.mean(luffy[j])

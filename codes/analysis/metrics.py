@@ -78,8 +78,6 @@ def offlineError(path, std=1):
     else:
         return eo[0]
 
-
-
 # def main():
 #     # reading the parameters from the config file
 #     try:
