@@ -26,9 +26,9 @@ hour = cDate.hour
 minute = cDate.minute
 
 def writeTXT(data, name, path):
-    line = f"- {name}= {data[0]:.4f}({data[1]:.4f})\n"
-    print(line)
-    f = open(f"{path}/results.txt","a")
+    line = f"{data[0]:.5f}\t{data[1]:.5f}"
+    #print(line)
+    f = open(f"{path}/{name}.txt","a")
     f.write(line)
     f.close()
 
@@ -74,6 +74,7 @@ def main():
         #path = f"{parameters['PATH']}/{parameters['ALGORITHM']}/{sys.argv[1]}/{sys.argv[2]}"
 
     Eo = offlineError(path)
+    writeTXT(Eo, "offlineError", path)
     print(Eo)
 
 
