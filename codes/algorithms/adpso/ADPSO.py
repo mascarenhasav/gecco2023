@@ -467,18 +467,10 @@ def adpso(parameters, seed):
             print(f"[RUN:{run:02}][GEN:{gen:03}][NEVALS:{nevals:05}] Best:{best.fitness.values[0]:.4f}")
 
     # Copy the config.ini file to the experiment dir
-    shutil.copyfile("config.ini", f"{path}/config.ini")
+    #shutil.copyfile("config.ini", f"{path}/config.ini")
     executionTime = (time.time() - startTime)
     print(f"File generated: {path}/data.csv \nThx!")
     print('Execution time in seconds: ' + str(executionTime))
-
-
-def call_adpso(exp_path):
-    # Read the parameters from the config file
-    with open("{exp_folder}/config.ini") as f:
-        parameters = json.loads(f.read())
-
-    call_adpso(parameters, exp_folder)
 
 def main():
     global path
@@ -507,7 +499,7 @@ def main():
     with open(f"{path}/config.ini") as f:
         parameters = json.loads(f.read())
     debug = parameters["DEBUG"]
-    if(debug):
+    if(True):
         print("Parameters:")
         print(parameters)
 

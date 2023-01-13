@@ -16,6 +16,7 @@ import datetime
 import os
 import csv
 import sys
+import getopt
 from deap import base
 from deap import benchmarks
 from deap import creator
@@ -76,8 +77,8 @@ def plot(ax, data, label, fStd=0, color="orange", linestyle="-", parameters=Fals
 
 
 
-def showPlots(fig, ax, parameters, parameters2):
-    path = f"{parameters['PATH']}/{parameters['ALGORITHM']}/{sys.argv[1]}/{sys.argv[2]}"
+def showPlots(fig, ax, parameters, parameters2, path):
+#    path = f"{parameters['PATH']}/{parameters['ALGORITHM']}/{sys.argv[1]}/{sys.argv[2]}"
     THEME = parameters["THEME"]
     plt.legend()
     for text in plt.legend().get_texts():
@@ -122,8 +123,23 @@ def mean(data):
 
 
 def main():
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], "hp:", ["help", "path="])
+    except:
+        print(arg_help)
+        sys.exit(2)
+
+    for opt, arg in opts:
+        if opt in ("-h", "--help"):
+            print(arg_help)  # print the help message
+            sys.exit(2)
+        elif opt in ("-p", "--path"):
+            path = arg
+
+    print(path)
+
     # reading the parameters from the config file
-    with open("./config.ini") as f:
+    with open(f"./config.ini") as f:
         parameters = json.loads(f.read())
     debug = parameters["DEBUG"]
     if(debug):
@@ -133,8 +149,8 @@ def main():
     THEME = parameters["THEME"]
     fig, ax = configPlot(parameters)
 
-    path = f"{parameters['PATH']}/{parameters['ALGORITHM']}/{sys.argv[1]}"
-    for j in range(2, len(sys.argv)):
+    #path = f"{parameters['PATH']}/{parameters['ALGORITHM']}/{sys.argv[1]}"
+    for j in range(3, len(sys.argv)):
 
         pathTmp = f"{path}/{sys.argv[j]}"
         print(pathTmp)
@@ -154,7 +170,7 @@ def main():
                 ax = plot(ax, data=data[i], label=f"Run {i+1}", color=colors[i], parameters=parameters)
 
         bestMean = mean(data)
-        ax = plot(ax, data=bestMean, label=f"{parameters2['ALGORITHM']}(M{parameters2['NSWARMS']:02}ESP{parameters2['ES_PARTICLE_OP']}({parameters2['ES_PARTICLE_PERC']})ESC{parameters2['ES_CHANGE_OP']}LS{parameters2['LOCAL_SEARCH_OP']}X{parameters2['EXCLUSION_OP']}C{parameters2['ANTI_CONVERGENCE_OP']})", color=colors[j-2], linestyle=lineStyles[j-2], fStd=1, parameters=parameters)
+        ax = plot(ax, data=bestMean, label=f"{parameters2['ALGORITHM']}(M{parameters2['NSWARMS']:02}ESP{parameters2['ES_PARTICLE_PERC']}ESC{parameters2['ES_CHANGE_OP']}LS{parameters2['LOCAL_SEARCH_OP']}X{parameters2['EXCLUSION_OP']}C{parameters2['ANTI_CONVERGENCE_OP']})", color=colors[j-2], linestyle=lineStyles[j-2], fStd=1, parameters=parameters)
 
 
     if(parameters2["RANDOM_CHANGES"]):
@@ -164,7 +180,7 @@ def main():
     #changesEnv = data[0].ne(data[0].shift()).filter(like="env").apply(lambda x: x.index[x].tolist())["env"][1:]
     for i in changesEnv:
         plt.axvline(int(i), color="black", linestyle="--")
-    showPlots(fig, ax, parameters, parameters2)
+    showPlots(fig, ax, parameters, parameters2, path)
 
 
 if __name__ == "__main__":
