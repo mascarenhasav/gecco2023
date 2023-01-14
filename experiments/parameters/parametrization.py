@@ -5,7 +5,7 @@ import json
 config = {
 "ALGORITHM": "ADPSO",
 "BENCHMARK": "MPB",
-"RUNS": 5,
+"RUNS": 30,
 "NEVALS": 100000,
 "POPSIZE": 100,
 "phi1": 0.729843788,
@@ -14,7 +14,7 @@ config = {
 "BOUNDS_VEL": [-5, 5],
 "CHANGE_DETECTION_OP": 1,
 "NSWARMS": 10,
-"ES_PARTICLE_PERC": 0,
+"ES_PARTICLE_PERC": 0.75,
 "ES_CHANGE_OP": 0,
 "RCLOUD": 0,
 "LOCAL_SEARCH_OP": 1,
@@ -44,7 +44,7 @@ config = {
 "DEBUG": 0
 }
 
-algorithm = "ADPSO-ES-0"
+algorithm = "ADPSO-ES-.75"
 if(os.path.isdir(algorithm) == False):
     os.mkdir(algorithm)
 parameter = "RLS"
@@ -54,7 +54,7 @@ pathParameter = ""
 if(os.path.isdir(path) == False):
     os.mkdir(path)
 
-values = [round(i,2) for i in np.arange(0, 2*config["MOVE_SEVERITY_MPB"], 0.2)]
+values = [round(i,2) for i in np.arange(1.2, 2*config["MOVE_SEVERITY_MPB"]+0.2, 0.2)]
 
 for i in values:
     config[parameter] = i
@@ -65,4 +65,4 @@ for i in values:
         convert_file.write(json.dumps(config))
     print(f"{pathParameter}")
     os.system(f"python3 ../../codes/algorithms/adpso/ADPSO.py -s 42 -p {pathParameter}")
-    os.system(f"python3 ../../codes/analysis/offlineError.py {pathParameter}")
+    os.system(f"python3 ../../codes/analysis/offlineError.py {pathParameter} &")

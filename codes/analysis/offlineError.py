@@ -28,7 +28,7 @@ minute = cDate.minute
 def writeTXT(data, name, path):
     line = f"{data[0]:.5f}\t{data[1]:.5f}"
     #print(line)
-    f = open(f"{path}/{name}.txt","a")
+    f = open(f"{path}/{name}.txt","w")
     f.write(line)
     f.close()
 
