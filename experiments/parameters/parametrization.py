@@ -14,10 +14,10 @@ config = {
 "BOUNDS_VEL": [-5, 5],
 "CHANGE_DETECTION_OP": 1,
 "NSWARMS": 10,
-"ES_PARTICLE_PERC": 0.75,
+"ES_PARTICLE_PERC": 0,
 "ES_CHANGE_OP": 0,
 "RCLOUD": 0,
-"LOCAL_SEARCH_OP": 1,
+"LOCAL_SEARCH_OP": 0,
 "ETRY": 20,
 "RLS": 0,
 "EXCLUSION_OP": 0,
@@ -44,7 +44,7 @@ config = {
 "DEBUG": 0
 }
 
-algorithm = "ADPSO-ES-.75"
+algorithm = "ADPSO-ES-0"
 if(os.path.isdir(algorithm) == False):
     os.mkdir(algorithm)
 parameter = "RLS"
@@ -54,7 +54,7 @@ pathParameter = ""
 if(os.path.isdir(path) == False):
     os.mkdir(path)
 
-values = [round(i,2) for i in np.arange(1.2, 2*config["MOVE_SEVERITY_MPB"]+0.2, 0.2)]
+values = [round(i,2) for i in np.arange(0, 0, 0)]
 
 for i in values:
     config[parameter] = i
