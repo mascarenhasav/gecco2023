@@ -14,15 +14,15 @@ config = {
 "BOUNDS_VEL": [-5, 5],
 "CHANGE_DETECTION_OP": 1,
 "NSWARMS": 10,
-"ES_PARTICLE_PERC": 1,
+"ES_PARTICLE_PERC": 0,
 "ES_CHANGE_OP": 0,
 "RCLOUD": 0,
-"LOCAL_SEARCH_OP": 1,
+"LOCAL_SEARCH_OP": 0,
 "ETRY": 20,
 "RLS": 0,
 "EXCLUSION_OP": 0,
 "REXCL": 0,
-"ANTI_CONVERGENCE_OP": 0,
+"ANTI_CONVERGENCE_OP": 1,
 "RCONV": 0,
 "NDIM": 5,
 "CHANGE": 1,
@@ -44,18 +44,18 @@ config = {
 "DEBUG": 0
 }
 
-algorithm = "ADPSO-ES-1"
+algorithm = "ADPSO-ES-0"
 if(os.path.isdir(algorithm) == False):
     os.mkdir(algorithm)
-parameter = "RLS"
+parameter = "RCONV"
 
 path = f"{algorithm}/{parameter}"
 pathParameter = ""
 if(os.path.isdir(path) == False):
     os.mkdir(path)
 
-values = [round(i,2) for i in np.arange(2.5, 50.5, 0.5)]
-#values = [0.0]
+#values = [round(i,2) for i in np.arange(2.5, 50.5, 0.5)]
+values = [50.0]
 
 for i in values:
     config[parameter] = i
