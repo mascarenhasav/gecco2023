@@ -17,7 +17,7 @@ config = {
 "ES_PARTICLE_PERC": 1,
 "ES_CHANGE_OP": 0,
 "RCLOUD": 0,
-"LOCAL_SEARCH_OP": 0,
+"LOCAL_SEARCH_OP": 1,
 "ETRY": 20,
 "RLS": 0,
 "EXCLUSION_OP": 0,
@@ -54,8 +54,8 @@ pathParameter = ""
 if(os.path.isdir(path) == False):
     os.mkdir(path)
 
-#values = [round(i,2) for i in np.arange(0, 1, 0.1)]
-values = [0.0]
+values = [round(i,2) for i in np.arange(2.5, 50.5, 0.5)]
+#values = [0.0]
 
 for i in values:
     config[parameter] = i
