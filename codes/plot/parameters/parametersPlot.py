@@ -70,8 +70,10 @@ def plot(ax, data, label, fStd=0, color="orange", linestyle="-", parameters=Fals
         ax.set_ylim(bottom=parameters["YLIM"][0], top=parameters["YLIM"][1])
     else:
         ax.set_ylim(bottom=0)
-    ax.set_xlim(0, data.iloc[:, 0].iloc[-1])
-    plt.legend()
+    if(parameters["XLIM"]):
+        ax.set_xlim(left=parameters["XLIM"][0], right=parameters["XLIM"][1])
+    else:
+        ax.set_xlim(0, data.iloc[:, 0].iloc[-1])
     #plt.xscale("log")
     return ax
 
@@ -96,8 +98,8 @@ def showPlots(fig, ax, parameters, parameters2, path):
                 DIM: {parameters2['NDIM']}\
                 SEVERITY: {parameters2['MOVE_SEVERITY_MPB']} \
                 "
-    ax[0].set_title(title, fontsize=16)
-    ax[1].set_xlabel("RCONV & REXCL", fontsize=12)
+    ax.set_title(title, fontsize=16)
+    ax.set_xlabel("RLS, REXCL and RCONV", fontsize=12)
     if(parameters["NAME"]==0):
         plt.savefig(f"{path}/{parameters['ALGORITHM']}-{parameters['PARAMETER']}.png", format="png")
     else:
@@ -171,7 +173,6 @@ def main():
 
     THEME = parameters["THEME"]
     fig, ax = configPlot(parameters)
-    ax2 = ax.twiny()
     offlineError = list()
     stdOe = list()
 
@@ -191,22 +192,14 @@ def main():
 
     #zipped = list(zip(, offlineError, stdOe))
     for i, parameter in enumerate(PARA):
-        if i == 0:
             ax = plot(ax, data=df[i], \
                 label=parameter,
                 color=colors[i],
                 linestyle=lineStyles[i],
                 fStd=1,
                 parameters=parameters)
-        else:
-            ax2 = plot(ax2, data=df[i], \
-                label=parameter,
-                color=colors[i],
-                linestyle=lineStyles[i],
-                fStd=1,
-                parameters=parameters)
 
-    showPlots(fig, [ax, ax2], parameters, parameters2, path)
+    showPlots(fig, ax, parameters, parameters2, path)
 
 
 if __name__ == "__main__":
