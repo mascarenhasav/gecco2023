@@ -64,6 +64,10 @@ Are the codes responsible for calculating the metrics of the execution of the al
         - **AC_TYPE_OP: {0, 1, 2}** 
             - 0: Spatial size monitoring
                 - **RCONV: 0 - BOUNDMAX** (real) - Radius for a subpopulation be considered converged.
+            - 1: Fitness monitoring
+                - **RCONV: 0 - BOUNDMAX** (real) - Radius for a subpopulation be considered converged.
+            - 2: Spatial size monitoring
+                - **RCONV: 0 - BOUNDMAX** (real) - Radius for a subpopulation be considered converged.
 
 - Exclusion based on spatial size monitoring
 
