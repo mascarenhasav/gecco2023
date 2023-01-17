@@ -1,27 +1,22 @@
-# Auto-Dynamic Particle Swarm Optimization (ADPSO)
-
-## Work to do:
-1. <del>Implementacao do benchmark dinamico (periodo variavel opcional)</del>
-2. Definicao dos criterios de avaliacao dos resultados dos algoritmos
-3. Programar um sistema de PSO que possa "ligar/desligar" os componentes daquela tabela que o alexandre apresentou semana passada atravez de um arquivo de configuracao.
-4. Rodar testes dos algoritmos basicos contra o benchmark basico
-5. Rodar um iRace no sistema configuravel acima para encontrar a melhor configuracao.
-6. Analisar os resultados
+# Framework for Dynamic Particle Swarm Optimization-Evolutionary Strategy (DPSO-ES)
 
 
 ## Features
-It is possible to configure whether the Benchmark will have changes in the environment in fixed periods, or random periods. Periods are based on population generations.
+The DPSO-ES framework was developed in Python using the DEAP library to test different components present in the literature on Dynamic Evolutionary Algorithms (DEA) that are used in optimization of dynamic problems (DOP). It allows the components to be turned on/off in order to test the effectiveness of each one of them independently in a given problem.
+Another characteristic is the possibility of configuring the parameters of both the optimizers (PSO, ES) and the characteristics of the Benchmark, which until now consists of the Moving Peak Benchmark (MPB).
 
-### PSO the possible configurations are:
-- GEN: Number of generations (integer);
+### General parameters:
+- RUNS: Number of runs;
+- NEVALS: Number of Evaluations of each run;
 - POPSIZE: Population size (integer);
-- RUNS: Number of times the algorithm will run (integer);
-- phi1: Parameter referring to the weight of the individual's contribution (float);
-- phi2: Parameter referring to the contribution weight of the best individual in the flock (float);
 - NDIM: Number of dimensions of the problem (integer);
 - BOUNDS: Problem boundaries (list of integers);
 
-### Benchmark (Moving Peak Benchmark) the configurable parameters are the following:
+### PSO the possible configurations are:
+- phi1 (PSO): Parameter referring to the weight of the individual's contribution (float);
+- phi2 (PSO): Parameter referring to the contribution weight of the best individual in the flock (float);
+
+### Benchmark (Moving Peak Benchmark) parameters:
 - CHANGE: If there will be changes in the environment (bool);
 - RANDOM_CHANGES: Whether the changes will be random or not (bool);
 - RANGE_GEN_CHANGES: Range of allowed values for random changes to occur (list of integers);
@@ -32,3 +27,12 @@ It is possible to configure whether the Benchmark will have changes in the envir
 - MAX_HEIGHT_MPB: Maximum value for peaks (integer);
 - MIN_HEIGHT_MPB: Minimum value for peaks (integer);
 - MOVE_SEVERITY_MPB: Intensity of the change in the position of the peaks when there is a change of environment (float);
+
+
+## Work to do:
+1. <del>Implementacao do benchmark dinamico (periodo variavel opcional)</del>
+2. Definicao dos criterios de avaliacao dos resultados dos algoritmos
+3. Programar um sistema de PSO que possa "ligar/desligar" os componentes daquela tabela que o alexandre apresentou semana passada atravez de um arquivo de configuracao.
+4. Rodar testes dos algoritmos basicos contra o benchmark basico
+5. Rodar um iRace no sistema configuravel acima para encontrar a melhor configuracao.
+6. Analisar os resultados
