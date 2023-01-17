@@ -62,7 +62,8 @@ Are the codes responsible for calculating the metrics of the execution of the al
     - **ANTI_CONVERGENCE_OP: 0 or 1** (bool) - 0 for anti-convergency OFF, 1 for anti-convergency ON
     - Type:
         - **AC_TYPE_OP: {0, 1, 2}** 
-        - **RCONV: 0 - BOUNDMAX** (real) - Radius for a subpopulation be considered converged.
+            - 0: Spatial size monitoring
+                - **RCONV: 0 - BOUNDMAX** (real) - Radius for a subpopulation be considered converged.
 
 - Exclusion based on spatial size monitoring
 
