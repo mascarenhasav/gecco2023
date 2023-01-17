@@ -13,16 +13,33 @@ In "codes/plot" are the codes responsible for generating the performance graphs 
 
 In "codes/analysis" are the codes responsible for calculating the metrics of the execution of the algorithms.
 
-### General parameters:
+## Parameters
+
+### General parameters
 - RUNS: Number of runs;
 - NEVALS: Number of Evaluations of each run;
 - POPSIZE: Population size (integer);
 - NDIM: Number of dimensions of the problem (integer);
 - BOUNDS: Problem boundaries (list of integers);
 
-### PSO the possible configurations are:
-- phi1 (PSO): Parameter referring to the weight of the individual's contribution (float);
-- phi2 (PSO): Parameter referring to the contribution weight of the best individual in the flock (float);
+## Optmizer parameters
+
+### PSO parameters
+- phi1 : Parameter referring to the weight of the individual's contribution (float);
+- phi2 : Parameter referring to the contribution weight of the best individual in the flock (float);
+
+### ES parameters
+- RCLOUD: Radius around the individual to be searched.
+
+## Operators parameters
+
+### Change Detection
+
+### Diversity
+
+### Anti-Convergency
+
+### Multipopulation
 
 ### Benchmark (Moving Peak Benchmark) parameters:
 - CHANGE: If there will be changes in the environment (bool);
