@@ -57,10 +57,12 @@ Are the codes responsible for calculating the metrics of the execution of the al
 
 ### Diversity control
 
-- Anti-Convergency based on spatial size monitoring
+- Anti-Convergency based
 
     - **ANTI_CONVERGENCE_OP: 0 or 1** (bool) - 0 for anti-convergency OFF, 1 for anti-convergency ON
-    - **RCONV: 0 - BOUNDMAX** (real) - Radius for a subpopulation be considered converged.
+    - Type:
+        - **AC_TYPE_OP: {0, 1, 2}** 
+        - **RCONV: 0 - BOUNDMAX** (real) - Radius for a subpopulation be considered converged.
 
 - Exclusion based on spatial size monitoring
 
