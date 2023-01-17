@@ -2,42 +2,67 @@
 
 
 ## Description
-The DPSO-ES framework was developed in Python using the DEAP library to test different components present in the literature on Dynamic Evolutionary Algorithms (DEA) that are used in optimization of dynamic problems (DOP). It allows the components to be turned on/off in order to test the effectiveness of each one of them independently in a given problem.
-Another characteristic is the possibility of configuring the parameters of both the optimizers (PSO, ES) and the characteristics of the Benchmark, which until now consists of the Moving Peak Benchmark (MPB).
+The DPSO-ES framework was developed in Python using the DEAP library to test different 
+components present in the literature on Dynamic Evolutionary Algorithms (DEA) that are 
+used in optimization of dynamic problems (DOP). It allows the components to be turned 
+on/off in order to test the effectiveness of each one of them independently in a given 
+problem.
+Another characteristic is the possibility of configuring the parameters of both the 
+optimizers (PSO, ES) and the characteristics of the Benchmark, which until now consists 
+of the Moving Peak Benchmark (MPB).
 
 ## Contents
 
-This repository contains both the framework code in the "codes/algorithms/adpso" folder and codes related to the analysis of experimental data:
+This repository contains both the framework code in the "codes/algorithms/adpso" 
+folder and codes related to the analysis of experimental data:
 
-In "codes/plot" are the codes responsible for generating the performance graphs of the algorithms;
+In <br> 
+> "codes/plot" 
+Are the codes responsible for generating the performance graphs of 
+the algorithms;
 
-In "codes/analysis" are the codes responsible for calculating the metrics of the execution of the algorithms.
+In <br>
+> "codes/analysis" 
+Are the codes responsible for calculating the metrics of the execution of the algorithms.
 
-## Parameters
+## Parameters settings
 
 ### General parameters
-- RUNS: Number of runs;
-- NEVALS: Number of Evaluations of each run;
-- POPSIZE: Population size (integer);
-- NDIM: Number of dimensions of the problem (integer);
-- BOUNDS: Problem boundaries (list of integers);
+> RUNS: 1 - 1000 (int) -> Number of runs;
+> NEVALS: 1 - 1000000 (int) -> Number of Evaluations of each run;
+> POPSIZE: 1 - 1000 (int) -> Population size;
+> NDIM: 1-1000 (int) -> Number of dimensions of the problem;
+> BOUNDS: [BOUNDMIN, BOUNDMAX] (list of int) -> Problem boundaries;
 
 ## Optmizer parameters
 
-### PSO parameters
-- phi1 : Parameter referring to the weight of the individual's contribution (float);
-- phi2 : Parameter referring to the contribution weight of the best individual in the flock (float);
+### PSO
+> phi1: 0 - 10 (real) -> Parameter referring to the weight of the individual's contribution;
+> phi2: 0 - 10 (real)-> Parameter referring to the contribution weight of the best individual in the flock.
 
-### ES parameters
-- RCLOUD: Radius around the individual to be searched.
+### ES
+> RCLOUD: 0 - BOUNDMAX (real) -> Radius around the individual to be searched.
 
-## Operators parameters
+## Operators
 
 ### Change Detection
 
-### Diversity
+Reevaluation based method
 
-### Anti-Convergency
+> CHANGE_DETECTION_OP: 0 or 1 (bool) -> 0 for change detection off <br> 1 for change detection on
+
+
+### Diversity control
+
+Anti-Convergency based on spatial size monitoring
+
+> ANTI_CONVERGENCE_OP: 0 or 1 (bool) - 0 for anti-convergency off <br> 1 for anti-convergency on
+> RCONV: 0 - BOUNDMAX (real) - Radius for a subpopulation be considered converged.
+
+Exclusion based on spatial size monitoring
+
+> EXCLUSION_OP: 0 or 1 (bool) - 0 for exclusion OFF <br> 1 for exclusion ON
+> REXCL: 0 - BOUNDMAX (real) - Radius for two subpopulation be considered redundant.
 
 ### Multipopulation
 
