@@ -17,31 +17,33 @@ This repository contains both the framework code in the "codes/algorithms/adpso"
 folder and codes related to the analysis of experimental data:
 
 In <br> 
-> "codes/plot" 
+> "codes/plot"
+
 Are the codes responsible for generating the performance graphs of 
 the algorithms;
 
 In <br>
 > "codes/analysis" 
+
 Are the codes responsible for calculating the metrics of the execution of the algorithms.
 
 ## Parameters settings
 
 ### General parameters
-> RUNS: 1 - 1000 (int) -> Number of runs;
-> NEVALS: 1 - 1000000 (int) -> Number of Evaluations of each run;
-> POPSIZE: 1 - 1000 (int) -> Population size;
-> NDIM: 1-1000 (int) -> Number of dimensions of the problem;
-> BOUNDS: [BOUNDMIN, BOUNDMAX] (list of int) -> Problem boundaries;
+- **RUNS: 1 - 1000** (int) -> Number of runs;
+- **NEVALS: 1 - 1000000** (int) -> Number of Evaluations of each run;
+- **POPSIZE: 1 - 1000** (int) -> Population size;
+- **NDIM: 1-1000** (int) -> Number of dimensions of the problem;
+- **BOUNDS: [BOUNDMIN, BOUNDMAX]** (list of int) -> Problem boundaries;
 
 ## Optmizer parameters
 
 ### PSO
-> phi1: 0 - 10 (real) -> Parameter referring to the weight of the individual's contribution;
-> phi2: 0 - 10 (real)-> Parameter referring to the contribution weight of the best individual in the flock.
+- **phi1: 0 - 10** (real) -> Parameter referring to the weight of the individual's contribution;
+- **phi2: 0 - 10** (real)-> Parameter referring to the contribution weight of the best individual in the flock.
 
 ### ES
-> RCLOUD: 0 - BOUNDMAX (real) -> Radius around the individual to be searched.
+- **RCLOUD: 0 - BOUNDMAX** (real) -> Radius around the individual to be searched.
 
 ## Operators
 
@@ -49,22 +51,24 @@ Are the codes responsible for calculating the metrics of the execution of the al
 
 Reevaluation based method
 
-> CHANGE_DETECTION_OP: 0 or 1 (bool) -> 0 for change detection off <br> 1 for change detection on
+- **CHANGE_DETECTION_OP: 0 or 1** (bool) -> 0 for change detection off <br> 1 for change detection on
 
 
 ### Diversity control
 
 Anti-Convergency based on spatial size monitoring
 
-> ANTI_CONVERGENCE_OP: 0 or 1 (bool) - 0 for anti-convergency off <br> 1 for anti-convergency on
-> RCONV: 0 - BOUNDMAX (real) - Radius for a subpopulation be considered converged.
+- **ANTI_CONVERGENCE_OP: 0 or 1** (bool) - 0 for anti-convergency off <br> 1 for anti-convergency on
+- **RCONV: 0 - BOUNDMAX** (real) - Radius for a subpopulation be considered converged.
 
 Exclusion based on spatial size monitoring
 
-> EXCLUSION_OP: 0 or 1 (bool) - 0 for exclusion OFF <br> 1 for exclusion ON
-> REXCL: 0 - BOUNDMAX (real) - Radius for two subpopulation be considered redundant.
+- **EXCLUSION_OP: 0 or 1** (bool) - 0 for exclusion OFF <br> 1 for exclusion ON
+- **REXCL: 0 - BOUNDMAX** (real) - Radius for two subpopulation be considered redundant.
 
-### Multipopulation
+### Population division and management
+
+- **NSPOP: 1 - POPSIZE** (int) - Number of subpopulations.
 
 ### Benchmark (Moving Peak Benchmark) parameters:
 - CHANGE: If there will be changes in the environment (bool);
