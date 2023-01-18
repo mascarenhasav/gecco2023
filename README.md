@@ -78,7 +78,8 @@ Are the codes responsible for calculating the metrics of the execution of the al
     - Fixed number of subpopulations
         - *NSPOP: 1 - POPSIZE* (int) -> Number of subpopulations.
 
-### Benchmark (Moving Peak Benchmark) parameters:
+## Benchmark (Moving Peak Benchmark) parameters:
+
 - *CHANGE: 0 or 1* (bool) -> If there will be changes in the environment;
 - *RANDOM_CHANGES: 0 or 1* (bool) -> Whether the changes will be random or not;
 - *RANGE_GEN_CHANGES: [MIN, MAX]* (list of int) -> Range of allowed values for random changes to occur;
