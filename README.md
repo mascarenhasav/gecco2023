@@ -60,12 +60,11 @@ Are the codes responsible for calculating the metrics of the execution of the al
 - Anti-Convergency based
 
     - **ANTI_CONVERGENCE_OP: 0 or 1** (bool) -> 0 for anti-convergency OFF, 1 for anti-convergency ON
-    - Type:
-        - **AC_TYPE_OP: {1, 2, 3}** (int) -> Type of anti-convergency
-            - 1: Spatial size monitoring
-                - **RCONV: 0 - BOUNDMAX** (real) -> Radius for a subpopulation be considered converged.
-            - 2: Fitness monitoring
-                - **RCONV: 0 - BOUNDMAX** (real) -> Radius for a subpopulation be considered converged.
+    - **AC_TYPE_OP: {1, 2, 3}** (int) -> Type of anti-convergency
+        - 1: Spatial size monitoring
+            - **RCONV: 0 - BOUNDMAX** (real) -> Radius for a subpopulation be considered converged.
+        - 2: Fitness monitoring
+            - **RCONV: 0 - BOUNDMAX** (real) -> Radius for a subpopulation be considered converged.
 
 - Exclusion based on spatial size monitoring
 
@@ -74,9 +73,10 @@ Are the codes responsible for calculating the metrics of the execution of the al
 
 ### Population division and management
 
-- Multiswarm
+- Multipopulation
 
-    - **NSPOP: 1 - POPSIZE** (int) -> Number of subpopulations.
+    - Fixed number of subpopulations
+        - **NSPOP: 1 - POPSIZE** (int) -> Number of subpopulations.
 
 ### Benchmark (Moving Peak Benchmark) parameters:
 - CHANGE: If there will be changes in the environment (bool);
