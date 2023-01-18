@@ -57,7 +57,7 @@ Are the codes responsible for calculating the metrics of the execution of the al
 
 ### Diversity control
 
-- Anti-Convergency based
+#### Anti-Convergency based
 
     - **ANTI_CONVERGENCE_OP: 0 or 1** (bool) -> 0 for anti-convergency OFF, 1 for anti-convergency ON
     - **AC_TYPE_OP: {1, 2, 3}** (int) -> Type of anti-convergency
