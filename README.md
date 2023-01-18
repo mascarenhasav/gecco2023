@@ -41,7 +41,7 @@ Are the codes responsible for calculating the metrics of the execution of the al
 
 - PSO
     - **phi1: 0 - 10** (real) -> Parameter referring to the weight of the individual's contribution;
-    - **phi2: 0 - 10** (real)-> Parameter referring to the contribution weight of the best individual in the flock.
+    - **phi2: 0 - 10** (real) -> Parameter referring to the contribution weight of the best individual in the flock.
 
 - ES
     - **RCLOUD: 0 - BOUNDMAX** (real) -> Radius around the individual to be searched.
@@ -59,26 +59,24 @@ Are the codes responsible for calculating the metrics of the execution of the al
 
 - Anti-Convergency based
 
-    - **ANTI_CONVERGENCE_OP: 0 or 1** (bool) - 0 for anti-convergency OFF, 1 for anti-convergency ON
+    - **ANTI_CONVERGENCE_OP: 0 or 1** (bool) -> 0 for anti-convergency OFF, 1 for anti-convergency ON
     - Type:
-        - **AC_TYPE_OP: {0, 1, 2}** 
-            - 0: Spatial size monitoring
-                - **RCONV: 0 - BOUNDMAX** (real) - Radius for a subpopulation be considered converged.
-            - 1: Fitness monitoring
-                - **RCONV: 0 - BOUNDMAX** (real) - Radius for a subpopulation be considered converged.
-            - 2: Spatial size monitoring
-                - **RCONV: 0 - BOUNDMAX** (real) - Radius for a subpopulation be considered converged.
+        - **AC_TYPE_OP: {1, 2, 3}** (int) -> Type of anti-convergency
+            - 1: Spatial size monitoring
+                - **RCONV: 0 - BOUNDMAX** (real) -> Radius for a subpopulation be considered converged.
+            - 2: Fitness monitoring
+                - **RCONV: 0 - BOUNDMAX** (real) -> Radius for a subpopulation be considered converged.
 
 - Exclusion based on spatial size monitoring
 
-    - **EXCLUSION_OP: 0 or 1** (bool) - 0 for exclusion OFF <br> 1 for exclusion ON
-    - **REXCL: 0 - BOUNDMAX** (real) - Radius for two subpopulation be considered redundant.
+    - **EXCLUSION_OP: 0 or 1** (bool) -> 0 for exclusion OFF, 1 for exclusion ON
+    - **REXCL: 0 - BOUNDMAX** (real) -> Radius for two subpopulation be considered redundant.
 
 ### Population division and management
 
 - Multiswarm
 
-    - **NSPOP: 1 - POPSIZE** (int) - Number of subpopulations.
+    - **NSPOP: 1 - POPSIZE** (int) -> Number of subpopulations.
 
 ### Benchmark (Moving Peak Benchmark) parameters:
 - CHANGE: If there will be changes in the environment (bool);
