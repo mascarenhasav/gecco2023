@@ -1,8 +1,8 @@
-# Framework for Dynamic Particle Swarm Optimization-Evolutionary Strategy (DPSO-ES)
+# Adjustable Component for Dynamic Problems (AbCD) - A framework for Dynamic Optimization Problems
 
 
 ## Description
-The DPSO-ES framework was developed in Python using the DEAP library to test different 
+The AbCD framework was developed in Python using the DEAP library to test different 
 components present in the literature on Dynamic Evolutionary Algorithms (DEA) that are 
 used in optimization of dynamic problems (DOP). It allows the components to be turned 
 on/off in order to test the effectiveness of each one of them independently in a given 
