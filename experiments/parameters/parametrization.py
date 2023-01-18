@@ -5,16 +5,16 @@ import json
 config = {
 "ALGORITHM": "ADPSO",
 "BENCHMARK": "MPB",
-"RUNS": 30,
+"RUNS": 50,
 "NEVALS": 100000,
-"POPSIZE": 100,
+"POPSIZE": 200,
 "phi1": 0.729843788,
 "phi2": 2.05,
 "BOUNDS_POS": [0, 100],
 "BOUNDS_VEL": [-5, 5],
 "CHANGE_DETECTION_OP": 1,
 "NSWARMS": 10,
-"ES_PARTICLE_PERC": 0,
+"ES_PARTICLE_PERC": 1,
 "ES_CHANGE_OP": 0,
 "RCLOUD": 0,
 "LOCAL_SEARCH_OP": 0,
@@ -24,7 +24,7 @@ config = {
 "REXCL": 0,
 "ANTI_CONVERGENCE_OP": 1,
 "RCONV": 0,
-"NDIM": 5,
+"NDIM": 10,
 "CHANGE": 1,
 "RANDOM_CHANGES": 0,
 "RANGE_NEVALS_CHANGES": [100, 100000],
@@ -44,7 +44,7 @@ config = {
 "DEBUG": 0
 }
 
-algorithm = "ADPSO-ES-0"
+algorithm = "ADPSO-ES-1"
 if(os.path.isdir(algorithm) == False):
     os.mkdir(algorithm)
 parameter = "RCONV"
@@ -54,8 +54,8 @@ pathParameter = ""
 if(os.path.isdir(path) == False):
     os.mkdir(path)
 
-#values = [round(i,2) for i in np.arange(2.5, 50.5, 0.5)]
-values = [50.0]
+values = [round(i,2) for i in np.arange(3.0, 50.5, 0.5)]
+#values = [0.0]
 
 for i in values:
     config[parameter] = i
