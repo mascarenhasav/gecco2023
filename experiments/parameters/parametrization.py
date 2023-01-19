@@ -54,7 +54,7 @@ pathParameter = ""
 if(os.path.isdir(path) == False):
     os.mkdir(path)
 
-values = [round(i,2) for i in np.arange(3.0, 50.5, 0.5)]
+values = [round(i,2) for i in np.arange(42, 50.5, 0.5)]
 #values = [0.0]
 
 for i in values:
@@ -66,4 +66,4 @@ for i in values:
         convert_file.write(json.dumps(config))
     print(f"{pathParameter}")
     os.system(f"python3 ../../codes/algorithms/adpso/ADPSO.py -s 42 -p {pathParameter}")
-    os.system(f"python3 ../../codes/analysis/offlineError.py {pathParameter} &")
+    os.system(f"python3 ../../codes/analysis/metrics/offlineError.py {pathParameter} &")
