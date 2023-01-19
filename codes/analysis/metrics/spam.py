@@ -46,6 +46,10 @@ for value in dirs1:
             dirValues.append(float(os.path.join(name)))
     dirValues.sort()
     for values2 in dirValues:
-        #print(f"{pathTmp}/{values2}")
+        #int(f"{pathTmp}/{values2}")
         print(f"{pathTmp}/{values2}")
-        os.system(f"python3 offlineError.py {pathTmp}/{values2}")
+        if(os.path.isfile(f"{pathTmp}/{values2}/offlineError.txt")):
+            print("Ja tem")
+        else:
+            #print("Nao tem")
+            os.system(f"python3 offlineError.py {pathTmp}/{values2}")
