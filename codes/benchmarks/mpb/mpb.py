@@ -71,7 +71,7 @@ for i in range (parameters["NCHANGES"]):
     X = np.arange(0, 100, 1.0)
     Y = np.arange(0, 100, 1.0)
     X, Y = np.meshgrid(X, Y)
-    Z = np.fromiter(map(lambda x: mpb(x)[0], zip(X.flat,Y.flat)), dtype=np.float, count=X.shape[0]*X.shape[1]).reshape(X.shape)
+    Z = np.fromiter(map(lambda x: mpb(x)[0], zip(X.flat,Y.flat)), dtype=np.float64, count=X.shape[0]*X.shape[1]).reshape(X.shape)
     ax.plot_surface(X, Y, Z, rstride=1, cstride=1, cmap=cm.jet, linewidth=0.1)
     plt.xlabel("x", fontsize=15)
     plt.ylabel("y", fontsize=15)
